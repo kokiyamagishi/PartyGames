@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="lo" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ເກມຣູເລັດ - Lucky Roulette</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts: Noto Sans Lao & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Noto+Sans+Lao:wght@400;600;700;900&display=swap" rel="stylesheet">
+  
+  <!-- Audio Engine (Tone.js) & Confetti -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    body {
+      font-family: 'Noto Sans Lao', 'Inter', sans-serif;
+      touch-action: manipulation;
+      overflow: hidden;
+    }
+    /* 光沢とネオングロー効果 */
+    .wheel-glow {
+      box-shadow: 0 0 50px -10px rgba(245, 158, 11, 0.25), 0 0 100px -20px rgba(99, 102, 241, 0.2);
+    }
+    .center-button-glow {
+      box-shadow: 0 8px 25px -4px rgba(234, 88, 12, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.4);
+    }
+    /* スクロールバー装飾 */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.6);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(100, 116, 139, 0.5);
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+
+<body class="h-full w-full flex flex-col justify-between items-center bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white select-none">
+  
+  <!-- トップナビゲーション・バー -->
+  <header class="w-full max-w-2xl px-4 pt-3 pb-1 flex items-center justify-between z-20">
+    <div class="flex items-center gap-2">
+      <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 to-rose-500 flex items-center justify-center shadow-lg shadow-amber-500/20">
+        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+        </svg>
+      </div>
+      <div>
+        <h1 class="text-base font-black tracking-wide bg-gradient-to-r from-amber-300 via-rose-300 to-amber-100 bg-clip-text text-transparent">
+          ວົງລໍ້ສາຍດື່ມ (Party Roulette)
+        </h1>
+        <p class="text-[10px] text-slate-400 font-medium tracking-wider" id="itemCountDisplay">
+          ລາຍຊື່: 6 ຄົນ
+        </p>
+      </div>
+    </div>
+
+    <!-- コントロールボタン群 -->
+    <div class="flex items-center gap-2">
+      <button id="soundToggleBtn" class="p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/60 text-slate-300 hover:text-amber-400 transition-all active:scale-95 shadow-md" title="ສຽງ">
+        <!-- 音声ONアイコン -->
+        <svg id="soundIconOn" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path>
+        </svg>
+        <!-- 音声OFFアイコン -->
+        <svg id="soundIconOff" class="w-4 h-4 hidden text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path>
+        </svg>
+      </button>
+
+      <button id="openEditBtn" class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/60 text-xs font-bold text-slate-200 hover:text-amber-300 transition-all active:scale-95 shadow-md">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+        </svg>
+        <span>ແກ້ໄຂລາຍການ</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- メイン：画面いっぱいに広がるルーレット領域 -->
+  <main class="flex-1 w-full flex flex-col items-center justify-center p-2 relative min-h-0 overflow-hidden">
+    <div id="wheelContainer" class="relative w-full aspect-square max-w-[min(90vw,74vh)] flex items-center justify-center cursor-pointer transition-transform active:scale-[0.99] touch-manipulation">
+      
+      <!-- 外枠装飾リング -->
+      <div class="absolute inset-0 rounded-full border-4 border-amber-500/30 wheel-glow pointer-events-none"></div>
+      
+      <!-- HTML5 Canvas ルーレット盤 -->
+      <canvas id="rouletteCanvas" class="w-full h-full block rounded-full shadow-2xl"></canvas>
+
+      <!-- 上部のストッパー針 (Pointer) -->
+      <div id="pointerWrapper" class="absolute -top-3.5 left-1/2 -translate-x-1/2 z-30 filter drop-shadow-[0_6px_10px_rgba(0,0,0,0.8)] pointer-events-none transition-transform duration-75 origin-[50%_15%]">
+        <svg width="44" height="60" viewBox="0 0 44 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- 針の土台 -->
+          <circle cx="22" cy="12" r="11" fill="url(#pointerRing)" stroke="#fef08a" stroke-width="2"/>
+          <circle cx="22" cy="12" r="5" fill="#f59e0b"/>
+          <!-- 尖った三角刃 -->
+          <path d="M14 16 L22 56 L30 16 Z" fill="url(#pointerBlade)" stroke="#fbbf24" stroke-width="1.5" stroke-linejoin="round"/>
+          <path d="M22 16 L22 54" stroke="#ffffff" stroke-width="1.2" opacity="0.6"/>
+          
+          <defs>
+            <linearGradient id="pointerRing" x1="11" y1="2" x2="33" y2="22" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#fbbf24"/>
+              <stop offset="1" stop-color="#b45309"/>
+            </linearGradient>
+            <linearGradient id="pointerBlade" x1="14" y1="16" x2="30" y2="56" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#f59e0b"/>
+              <stop offset="0.5" stop-color="#dc2626"/>
+              <stop offset="1" stop-color="#991b1b"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+
+      <!-- 中央の大きなSPINボタン（盤面中央の押し心地を高める） -->
+      <button id="centerSpinBtn" class="absolute z-20 w-[24%] h-[24%] rounded-full bg-gradient-to-tr from-amber-600 via-orange-500 to-yellow-400 border-[3px] border-amber-200 center-button-glow flex flex-col items-center justify-center transition-all duration-150 transform hover:scale-105 active:scale-90 cursor-pointer">
+        <span id="centerBtnText" class="text-base sm:text-xl font-black text-slate-950 tracking-wider drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)]">
+          ໝຸນ!
+        </span>
+        <span class="text-[9px] font-bold text-amber-950/80 -mt-0.5 tracking-tight">
+          ກົດບ່ອນນີ້
+        </span>
+      </button>
+
+    </div>
+  </main>
+
+  <!-- フッター：操作ガイド案内 -->
+  <footer class="w-full max-w-lg px-4 pb-4 pt-1 flex flex-col items-center justify-center text-center z-20">
+    <div class="px-4 py-2 rounded-2xl bg-slate-900/80 backdrop-blur-md border border-slate-800/80 shadow-inner flex items-center gap-2">
+      <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+      <p id="currentStatusText" class="text-xs font-semibold text-slate-300">
+        ກົດທີ່ວົງລໍ້ ຫຼື ປຸ່ມກາງເພື່ອເລີ່ມໝຸນ
+      </p>
+    </div>
+  </footer>
+
+  <!-- 当選結果モーダル -->
+  <div id="resultModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+    <div id="resultCard" class="w-full max-w-sm rounded-3xl bg-gradient-to-b from-slate-900 to-slate-950 border border-amber-500/40 p-6 text-center shadow-2xl transform scale-90 transition-transform duration-300 relative overflow-hidden">
+      <!-- キラキラ背景装飾 -->
+      <div class="absolute -top-20 -left-20 w-44 h-44 bg-amber-500/20 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="absolute -bottom-20 -right-20 w-44 h-44 bg-rose-500/20 rounded-full blur-3xl pointer-events-none"></div>
+
+      <div class="w-16 h-16 mx-auto mb-3 rounded-2xl bg-gradient-to-tr from-amber-400 to-orange-500 flex items-center justify-center shadow-xl shadow-amber-500/30">
+        <span class="text-3xl">🍻</span>
+      </div>
+
+      <h3 class="text-xs font-bold text-amber-400 uppercase tracking-widest mb-1">
+        ຜູ້ໂຊກດີຖືກເລືອກແລ້ວ!
+      </h3>
+      
+      <!-- 当選アイテム表示（すっきり大きく中央揃え） -->
+      <div class="my-4 py-4 px-3 rounded-2xl bg-slate-800/70 border border-slate-700/60 shadow-inner">
+        <p class="text-xs text-slate-400 mb-1">ຜູ້ທີ່ຖືກເລືອກແມ່ນ:</p>
+        <p id="winnerResultText" class="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-white to-amber-300 break-words leading-tight">
+          --
+        </p>
+      </div>
+
+      <!-- チャレンジボタン ＆ もう一度ボタン -->
+      <div class="space-y-2.5">
+        <button id="startChallengeBtn" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-rose-500 via-orange-500 to-amber-500 text-white font-black text-sm hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-rose-500/30 flex items-center justify-center gap-2 animate-bounce">
+          <span>🎯</span>
+          <span>ກົດຮັບຄຳທ້າທາຍ</span>
+        </button>
+
+        <button id="closeResultBtn" class="w-full py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 font-bold text-xs active:scale-95 transition-all border border-slate-700">
+          ໝຸນໃໝ່ (ເລືອກຄົນໃໝ່)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- チャレンジ専用ルーレットモーダル -->
+  <div id="challengeModal" class="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-3 opacity-0 pointer-events-none transition-opacity duration-300">
+    <div class="w-full max-w-sm rounded-3xl bg-gradient-to-b from-slate-900 to-slate-950 border border-rose-500/40 p-4 sm:p-5 flex flex-col items-center shadow-2xl relative">
+      <div class="w-full flex items-center justify-between mb-2">
+        <span class="text-xs font-black px-2.5 py-1 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
+          🎯 ວົງລໍ້ຄຳທ້າທາຍ
+        </span>
+        <button id="closeChallengeModalBtn" class="text-slate-400 hover:text-white p-1 text-xs">
+          ✕ ປິດ
+        </button>
+      </div>
+
+      <p class="text-xs text-slate-300 text-center mb-2">
+        ຄຳທ້າທາຍສຳລັບ: <span id="challengeTargetName" class="font-bold text-amber-300 text-sm">--</span>
+      </p>
+
+      <!-- チャレンジ専用ミニルーレット -->
+      <div id="challengeWheelContainer" class="relative w-full aspect-square max-w-[260px] flex items-center justify-center cursor-pointer transition-transform active:scale-[0.98]">
+        <canvas id="challengeCanvas" class="w-full h-full block rounded-full shadow-2xl"></canvas>
+        
+        <!-- 針 -->
+        <div id="challengePointer" class="absolute -top-2.5 left-1/2 -translate-x-1/2 z-30 filter drop-shadow-[0_4px_6px_rgba(0,0,0,0.8)] pointer-events-none origin-[50%_15%]">
+          <svg width="32" height="42" viewBox="0 0 44 60" fill="none">
+            <circle cx="22" cy="12" r="11" fill="#f59e0b" stroke="#fef08a" stroke-width="2"/>
+            <path d="M14 16 L22 56 L30 16 Z" fill="#ef4444" stroke="#fbbf24" stroke-width="1.5"/>
+          </svg>
+        </div>
+
+        <!-- チャレンジスピン中央ボタン -->
+        <button id="challengeSpinBtn" class="absolute z-20 w-[28%] h-[28%] rounded-full bg-gradient-to-tr from-rose-600 via-orange-500 to-amber-400 border-2 border-amber-200 shadow-lg flex flex-col items-center justify-center active:scale-90 transition">
+          <span id="challengeBtnText" class="text-xs font-black text-slate-950">ໝຸນ!</span>
+        </button>
+      </div>
+
+      <!-- チャレンジ結果テキスト -->
+      <div id="challengeResultBox" class="w-full mt-3 p-3 rounded-2xl bg-slate-800/80 border border-slate-700 text-center min-h-[58px] flex flex-col items-center justify-center">
+        <p id="challengeResultText" class="text-xs font-bold text-slate-300">
+          ກົດທີ່ວົງລໍ້ເພື່ອສຸ່ມຄຳທ້າທາຍ!
+        </p>
+        <p id="partnerAssignedText" class="text-xs font-black text-rose-400 mt-1 hidden"></p>
+      </div>
+
+      <!-- チャレンジ終了後に最初の画面へ戻るボタン -->
+      <button id="backToMainBtn" class="w-full mt-3 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black text-sm active:scale-95 transition-all shadow-lg hidden flex items-center justify-center gap-1.5">
+        <span>🔄</span>
+        <span>ກັບຄືນໜ້າຫຼັກ (ໝຸນຮອບໃໝ່)</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 項目編集モーダル -->
+  <div id="editModal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+    <div class="w-full max-w-md max-h-[92vh] rounded-3xl bg-slate-900 border border-slate-800 flex flex-col shadow-2xl overflow-hidden">
+      
+      <!-- モーダルヘッダー -->
+      <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/80">
+        <div class="flex items-center gap-2">
+          <span class="text-lg">⚙️</span>
+          <h2 class="text-base font-bold text-white">ຕັ້ງຄ່າລາຍການຣູເລັດ</h2>
+        </div>
+        <button id="closeEditBtn" class="text-slate-400 hover:text-white p-1 rounded-lg transition" title="ປິດ">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+
+      <!-- モーダルボディ（スクロールエリア） -->
+      <div class="p-4 sm:p-5 overflow-y-auto space-y-4 flex-1">
+        
+        <!-- 新規追加入力欄 -->
+        <form id="addItemForm" class="flex gap-2">
+          <input 
+            type="text" 
+            id="newItemInput" 
+            placeholder="ເພີ່ມຊື່ລາຍການໃໝ່..." 
+            maxlength="24"
+            class="flex-1 bg-slate-950 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 transition"
+          />
+          <button type="submit" class="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm active:scale-95 transition flex items-center gap-1 shadow-md">
+            <span>ເພີ່ມ</span>
+          </button>
+        </form>
+
+        <!-- プリセットクイック選択ボタン -->
+        <div>
+          <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
+            ຕົວເລືອກພ້ອມໃຊ້ (Presets)
+          </label>
+          <div class="grid grid-cols-3 gap-2">
+            <button type="button" class="preset-btn px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 hover:text-white border border-slate-700/60 transition truncate" data-preset="party">
+              👥 ລາຍຊື່ໝູ່ເພື່ອນ
+            </button>
+            <button type="button" class="preset-btn px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 hover:text-white border border-slate-700/60 transition truncate" data-preset="food">
+              🍲 ອາຫານລາວ
+            </button>
+            <button type="button" class="preset-btn px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 hover:text-white border border-slate-700/60 transition truncate" data-preset="decision">
+              ⚖️ ແມ່ນ / ບໍ່
+            </button>
+          </div>
+        </div>
+
+        <!-- 編集可能なアイテムリスト一覧 -->
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+              ລາຍການທັງໝົດ (ແຕະຊື່ເພື່ອແກ້ໄຂ)
+            </label>
+            <button type="button" id="resetDefaultsBtn" class="text-[11px] text-amber-400 hover:underline">
+              ຄ່າເລີ່ມຕົ້ນ
+            </button>
+          </div>
+          <div id="itemListContainer" class="space-y-1.5 max-h-56 overflow-y-auto pr-1">
+            <!-- JavaScriptで動的生成 -->
+          </div>
+        </div>
+      </div>
+
+      <!-- モーダルフッター -->
+      <div class="p-4 border-t border-slate-800 bg-slate-900 flex justify-end gap-2">
+        <button id="saveEditBtn" class="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm active:scale-95 transition shadow-lg shadow-amber-500/20">
+          ຢືນຢັນ ແລະ ນຳໃຊ້ (ບັນທຶກ)
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // ルーレットの初期データ（代表的なラオス料理など）
+    const PRESETS = {
+      default: ["ຕົ້ນ (Ton)", "ນ້ອຍ (Noy)", "ຕຸກ (Touk)", "ໂກ້ (Ko)", "ດາວ (Dao)", "ວິນ (Win)"],
+      party: ["ຕົ້ນ", "ນ້ອຍ", "ຕຸກ", "ໂກ້", "ດາວ", "ວິນ", "ຕ້ອມ", "ແອນ"],
+      food: ["ເຝີ", "ຕຳໝາກຫຸ່ງ", "ລາບຊີ້ນ", "ເຂົ້າປຸ້ນ", "ໄກ່ປິ້ງ", "ໝົກໄກ່", "ປາເຜົາ", "ແກງອ່ອມ"],
+      decision: ["ແມ່ນ (ຕົກລົງ)", "ບໍ່ແມ່ນ (ປະຕິເສດ)", "ລໍຖ້າກ່ອນ", "ລອງໃໝ່"]
+    };
+
+    // チャレンジルーレットの項目（ラオス語のみ：指名、もう一杯、セーフ）
+    const CHALLENGE_ITEMS = [
+      "ເລືອກຄົນດື່ມນຳ",
+      "ດື່ມຕື່ມ 1 ຈອກ!",
+      "ລອດໂຕ!",
+      "ເລືອກຄົນດື່ມນຳ",
+      "ດື່ມຕື່ມ 1 ຈອກ!",
+      "ລອດໂຕ!"
+    ];
+
+    // 各チャレンジ項目に対応する固定カラー（視認性向上）
+    const CHALLENGE_COLORS = {
+      "nomination": "#ea580c", // オレンジ: 指名
+      "drink": "#e11d48",      // レッド: もう一杯
+      "safe": "#10b981"        // エメラルドグリーン: セーフ
+    };
+
+    // セクターの鮮やかなカラーパレット
+    const COLOR_PALETTES = [
+      "#ef4444", "#f97316", "#f59e0b", "#10b981", 
+      "#06b6d4", "#3b82f6", "#8b5cf6", "#ec4899",
+      "#14b8a6", "#6366f1", "#d946ef", "#84cc16"
+    ];
+
+    let items = [...PRESETS.default];
+
+    // Canvas要素と解像度管理
+    const canvas = document.getElementById("rouletteCanvas");
+    const ctx = canvas.getContext("2d");
+    const wheelContainer = document.getElementById("wheelContainer");
+    const pointerWrapper = document.getElementById("pointerWrapper");
+
+    let currentAngle = 0;          // 現在のルーレットの回転角度 (ラジアン)
+    let angularVelocity = 0;       // 角速度
+    let isSpinning = false;        // 回転中フラグ
+    let spinPhase = "idle";        // "idle" | "accelerating" | "coasting" | "braking"
+    let targetVelocity = 0;        // 加速到達目標速度
+    let pointerDeflection = 0;     // 針の弾かれ角度
+    let lastPinIndex = -1;         // 前回通過したピンのインデックス
+    let isSoundEnabled = true;     // 効果音の有効/無効
+
+    let audioInitialized = false;
+    let tickSynth = null;
+    let winSynth = null;
+
+    function initAudio() {
+      if (audioInitialized) return;
+      try {
+        Tone.start();
+        // ピンに衝突したときの軽快な打楽器音
+        tickSynth = new Tone.MembraneSynth({
+          pitchDecay: 0.008,
+          octaves: 2,
+          oscillator: { type: "sine" },
+          envelope: { attack: 0.001, decay: 0.04, sustain: 0, release: 0.04 }
+        }).toDestination();
+        tickSynth.volume.value = -8;
+
+        // 当選時のファンファーレ用ポリフォニックシンセ
+        winSynth = new Tone.PolySynth(Tone.Synth, {
+          oscillator: { type: "triangle" },
+          envelope: { attack: 0.02, decay: 0.3, sustain: 0.2, release: 0.8 }
+        }).toDestination();
+        winSynth.volume.value = -4;
+
+        audioInitialized = true;
+      } catch (e) {
+        console.warn("Audio Context init suppressed", e);
+      }
+    }
+
+    function playTickSound() {
+      if (!isSoundEnabled || !tickSynth) return;
+      try {
+        // 回転速度に応じて少しピッチを変化
+        const note = angularVelocity > 0.15 ? "G5" : "E5";
+        tickSynth.triggerAttackRelease(note, "32n");
+      } catch (err) {}
+    }
+
+    function playWinSound() {
+      if (!isSoundEnabled || !winSynth) return;
+      try {
+        const now = Tone.now();
+        winSynth.triggerAttackRelease(["C5", "E5", "G5"], "8n", now);
+        winSynth.triggerAttackRelease(["E5", "G5", "C6"], "4n", now + 0.15);
+      } catch (err) {}
+    }
+
+    let size = 0;
+    let radius = 0;
+
+    function resizeCanvas() {
+      const rect = wheelContainer.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      size = Math.floor(rect.width);
+      if (size <= 0) return;
+
+      canvas.width = size * dpr;
+      canvas.height = size * dpr;
+      canvas.style.width = `${size}px`;
+      canvas.style.height = `${size}px`;
+
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(dpr, dpr);
+      radius = size / 2;
+
+      drawWheel();
+    }
+
+    window.addEventListener("resize", resizeCanvas);
+
+    function drawWheel() {
+      if (!ctx || size <= 0) return;
+      const count = items.length;
+      const sliceAngle = (Math.PI * 2) / count;
+
+      ctx.clearRect(0, 0, size, size);
+
+      ctx.save();
+      ctx.translate(radius, radius);
+      ctx.rotate(currentAngle);
+
+      // 外周のダークベゼルリング
+      ctx.beginPath();
+      ctx.arc(0, 0, radius - 2, 0, Math.PI * 2);
+      ctx.fillStyle = "#1e293b";
+      ctx.fill();
+
+      // 各スライス（扇形）の描画
+      for (let i = 0; i < count; i++) {
+        const start = i * sliceAngle;
+        const end = start + sliceAngle;
+        const color = COLOR_PALETTES[i % COLOR_PALETTES.length];
+
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, radius - 6, start, end);
+        ctx.closePath();
+        ctx.fillStyle = color;
+        ctx.fill();
+
+        // 放射状のグラデーション陰影（立体感）
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, radius - 6, start, end);
+        ctx.closePath();
+        ctx.clip();
+
+        const sectorShade = ctx.createRadialGradient(0, 0, radius * 0.25, 0, 0, radius);
+        sectorShade.addColorStop(0, "rgba(255, 255, 255, 0.25)");
+        sectorShade.addColorStop(0.8, "rgba(0, 0, 0, 0)");
+        sectorShade.addColorStop(1, "rgba(0, 0, 0, 0.45)");
+        ctx.fillStyle = sectorShade;
+        ctx.fill();
+        ctx.restore();
+
+        // ラベル文字の描画（上品で読みやすいフォントサイズと余白）
+        ctx.save();
+        ctx.rotate(start + sliceAngle / 2);
+        ctx.textAlign = "right";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = "#ffffff";
+
+        // スライスの角度と項目数に合わせて適度な余白ができるスマートなサイズ
+        let fontSize = Math.floor(radius * 0.088);
+        if (count <= 4) fontSize = Math.floor(radius * 0.10);
+        else if (count > 8) fontSize = Math.floor(radius * 0.075);
+        if (count > 12) fontSize = Math.floor(radius * 0.06);
+        if (count > 16) fontSize = Math.floor(radius * 0.048);
+
+        ctx.font = `700 ${fontSize}px 'Noto Sans Lao', sans-serif`;
+
+        // 軽やかな輪郭縁取りとシャドウ
+        ctx.lineJoin = "round";
+        ctx.miterLimit = 2;
+        ctx.strokeStyle = "rgba(0, 0, 0, 0.65)";
+        ctx.lineWidth = Math.max(1.8, fontSize * 0.1);
+
+        ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
+        ctx.shadowBlur = 4;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 1;
+
+        // スライス中央〜外周にすっきり収まる最大幅
+        const textX = radius * 0.84;
+        const maxTextWidth = radius * 0.52;
+        const rawText = items[i] || "";
+        const textToDisplay = rawText.length > 12 ? rawText.substring(0, 11) + '…' : rawText;
+
+        ctx.strokeText(textToDisplay, textX, 0, maxTextWidth);
+        ctx.fillText(textToDisplay, textX, 0, maxTextWidth);
+        ctx.restore();
+      }
+
+      // 外周の真鍮ピン（釘）の描画
+      for (let i = 0; i < count; i++) {
+        const pinAngle = i * sliceAngle;
+        const pinDist = radius * 0.94;
+        const px = Math.cos(pinAngle) * pinDist;
+        const py = Math.sin(pinAngle) * pinDist;
+
+        ctx.beginPath();
+        ctx.arc(px, py, radius * 0.024, 0, Math.PI * 2);
+        ctx.fillStyle = "#fef08a";
+        ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
+        ctx.shadowBlur = 4;
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(px, py, radius * 0.012, 0, Math.PI * 2);
+        ctx.fillStyle = "#ffffff";
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+
+    let lastTime = 0;
+    let brakeDeceleration = 0.988;
+
+    function startSpin() {
+      if (isSpinning && spinPhase !== "coasting") return;
+      initAudio();
+
+      if (!isSpinning) {
+        // 回転スタート
+        isSpinning = true;
+        spinPhase = "accelerating";
+        targetVelocity = 0.35 + Math.random() * 0.25; 
+        angularVelocity = 0.02;
+        document.getElementById("centerBtnText").innerText = "ຢຸດ!";
+        document.getElementById("currentStatusText").innerText = "ກົດເພື່ອຜ່ອນຄວາມໄວ ແລະ ຢຸດ";
+        lastTime = performance.now();
+        requestAnimationFrame(updateSpin);
+      } else if (spinPhase === "coasting") {
+        // プレイヤーの手動タップによるブレーキ開始
+        triggerBraking();
+      }
+    }
+
+    function triggerBraking() {
+      spinPhase = "braking";
+      brakeDeceleration = 0.984 + Math.random() * 0.007; 
+      document.getElementById("centerBtnText").innerText = "ລໍຖ້າ...";
+      document.getElementById("currentStatusText").innerText = "ກຳລັງກວດສອບຜົນ...";
+    }
+
+    function updateSpin(now) {
+      if (!isSpinning) return;
+
+      const dt = Math.min((now - lastTime) / 1000, 0.1);
+      lastTime = now;
+
+      if (spinPhase === "accelerating") {
+        angularVelocity += 0.8 * dt;
+        if (angularVelocity >= targetVelocity) {
+          angularVelocity = targetVelocity;
+          spinPhase = "coasting";
+          // タップしなくても自動で減速・停止する安心タイマー
+          setTimeout(() => {
+            if (spinPhase === "coasting") triggerBraking();
+          }, 1800 + Math.random() * 1200);
+        }
+      } else if (spinPhase === "braking") {
+        angularVelocity *= brakeDeceleration;
+        if (angularVelocity < 0.0018) {
+          stopSpin();
+          return;
+        }
+      }
+
+      currentAngle = (currentAngle + angularVelocity) % (Math.PI * 2);
+
+      // 針とピンの衝突物理判定（針は真上 3π/2 = -π/2 の位置）
+      const count = items.length;
+      const sliceAngle = (Math.PI * 2) / count;
+      const pointerAngle = Math.PI * 1.5; 
+      
+      let localAngle = (pointerAngle - currentAngle) % (Math.PI * 2);
+      if (localAngle < 0) localAngle += Math.PI * 2;
+
+      const currentPin = Math.floor(localAngle / sliceAngle);
+
+      if (currentPin !== lastPinIndex) {
+        lastPinIndex = currentPin;
+        playTickSound();
+        const deflectionIntensity = Math.min(22, Math.max(7, angularVelocity * 85));
+        pointerDeflection = (Math.random() > 0.5 ? 1 : -1) * deflectionIntensity;
+      }
+
+      pointerDeflection *= 0.72;
+      pointerWrapper.style.transform = `rotate(${pointerDeflection}deg)`;
+
+      drawWheel();
+      requestAnimationFrame(updateSpin);
+    }
+
+    function stopSpin() {
+      isSpinning = false;
+      angularVelocity = 0;
+      spinPhase = "idle";
+      pointerDeflection = 0;
+      pointerWrapper.style.transform = `rotate(0deg)`;
+      document.getElementById("centerBtnText").innerText = "ໝຸນ!";
+      document.getElementById("currentStatusText").innerText = "ກົດທີ່ວົງລໍ້ ຫຼື ປຸ່ມກາງເພື່ອເລີ່ມໝຸນ";
+
+      drawWheel();
+
+      // 当選アイテムの算出
+      const count = items.length;
+      const sliceAngle = (Math.PI * 2) / count;
+      const pointerAngle = Math.PI * 1.5;
+
+      let localAngle = (pointerAngle - currentAngle) % (Math.PI * 2);
+      if (localAngle < 0) localAngle += Math.PI * 2;
+
+      const winningIndex = Math.floor(localAngle / sliceAngle) % count;
+      const winningItem = items[winningIndex];
+
+      playWinSound();
+
+      // 紙吹雪 (Confetti) 演出
+      confetti({
+        particleCount: 90,
+        spread: 75,
+        origin: { y: 0.55 },
+        colors: ['#f59e0b', '#ef4444', '#3b82f6', '#10b981', '#ffffff']
+      });
+
+      showResultModal(winningItem);
+    }
+
+    const resultModal = document.getElementById("resultModal");
+    const resultCard = document.getElementById("resultCard");
+    const winnerResultText = document.getElementById("winnerResultText");
+    const closeResultBtn = document.getElementById("closeResultBtn");
+    const startChallengeBtn = document.getElementById("startChallengeBtn");
+
+    let currentWinner = "";
+
+    function showResultModal(item) {
+      currentWinner = item;
+      winnerResultText.innerText = item;
+      resultModal.classList.remove("opacity-0", "pointer-events-none");
+      resultCard.classList.remove("scale-90");
+      resultCard.classList.add("scale-100");
+    }
+
+    closeResultBtn.addEventListener("click", () => {
+      resultModal.classList.add("opacity-0", "pointer-events-none");
+      resultCard.classList.remove("scale-100");
+      resultCard.classList.add("scale-90");
+    });
+
+    resultModal.addEventListener("click", (e) => {
+      if (e.target === resultModal) closeResultBtn.click();
+    });
+
+    /* ========================================================
+       チャレンジルーレット (Challenge Wheel) ロジック
+       ======================================================== */
+    const challengeModal = document.getElementById("challengeModal");
+    const closeChallengeModalBtn = document.getElementById("closeChallengeModalBtn");
+    const challengeTargetName = document.getElementById("challengeTargetName");
+    const challengeCanvas = document.getElementById("challengeCanvas");
+    const challengeCtx = challengeCanvas.getContext("2d");
+    const challengeWheelContainer = document.getElementById("challengeWheelContainer");
+    const challengePointer = document.getElementById("challengePointer");
+    const challengeSpinBtn = document.getElementById("challengeSpinBtn");
+    const challengeBtnText = document.getElementById("challengeBtnText");
+    const challengeResultText = document.getElementById("challengeResultText");
+    const partnerAssignedText = document.getElementById("partnerAssignedText");
+    const backToMainBtn = document.getElementById("backToMainBtn");
+
+    let challengeAngle = 0;
+    let challengeVelocity = 0;
+    let isChallengeSpinning = false;
+    let hasChallengeSpun = false; // チャレンジルーレットを回したかどうかのフラグ
+    let challengeSize = 0;
+    let challengeLastPin = -1;
+
+    function resizeChallengeCanvas() {
+      const rect = challengeWheelContainer.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      challengeSize = Math.floor(rect.width) || 240;
+      challengeCanvas.width = challengeSize * dpr;
+      challengeCanvas.height = challengeSize * dpr;
+      challengeCanvas.style.width = `${challengeSize}px`;
+      challengeCanvas.style.height = `${challengeSize}px`;
+      challengeCtx.setTransform(1, 0, 0, 1, 0, 0);
+      challengeCtx.scale(dpr, dpr);
+      drawChallengeWheel();
+    }
+
+    function drawChallengeWheel() {
+      if (!challengeCtx || challengeSize <= 0) return;
+      const r = challengeSize / 2;
+      const count = CHALLENGE_ITEMS.length;
+      const slice = (Math.PI * 2) / count;
+
+      challengeCtx.clearRect(0, 0, challengeSize, challengeSize);
+      challengeCtx.save();
+      challengeCtx.translate(r, r);
+      challengeCtx.rotate(challengeAngle);
+
+      for (let i = 0; i < count; i++) {
+        const start = i * slice;
+        const end = start + slice;
+        challengeCtx.beginPath();
+        challengeCtx.moveTo(0, 0);
+        challengeCtx.arc(0, 0, r - 4, start, end);
+        challengeCtx.closePath();
+
+        // 項目タイプに応じたカラー適用
+        const itemText = CHALLENGE_ITEMS[i];
+        if (itemText.includes("ລອດໂຕ")) {
+          challengeCtx.fillStyle = CHALLENGE_COLORS.safe;       // セーフ (緑)
+        } else if (itemText.includes("ດື່ມຕື່ມ")) {
+          challengeCtx.fillStyle = CHALLENGE_COLORS.drink;      // もう一杯 (赤)
+        } else {
+          challengeCtx.fillStyle = CHALLENGE_COLORS.nomination; // 指名 (橙)
+        }
+        challengeCtx.fill();
+
+        // テキスト
+        challengeCtx.save();
+        challengeCtx.rotate(start + slice / 2);
+        challengeCtx.textAlign = "right";
+        challengeCtx.textBaseline = "middle";
+        challengeCtx.fillStyle = "#ffffff";
+        challengeCtx.font = `bold ${Math.floor(r * 0.11)}px 'Noto Sans Lao', sans-serif`;
+        challengeCtx.shadowColor = "rgba(0,0,0,0.8)";
+        challengeCtx.shadowBlur = 3;
+        challengeCtx.fillText(CHALLENGE_ITEMS[i], r * 0.88, 0, r * 0.62);
+        challengeCtx.restore();
+      }
+
+      // ピン
+      for (let i = 0; i < count; i++) {
+        const pinA = i * slice;
+        const px = Math.cos(pinA) * (r * 0.94);
+        const py = Math.sin(pinA) * (r * 0.94);
+        challengeCtx.beginPath();
+        challengeCtx.arc(px, py, 3, 0, Math.PI * 2);
+        challengeCtx.fillStyle = "#fff";
+        challengeCtx.fill();
+      }
+
+      challengeCtx.restore();
+    }
+
+    function startChallengeSpin() {
+      if (isChallengeSpinning || hasChallengeSpun) return;
+      initAudio();
+      isChallengeSpinning = true;
+      challengeVelocity = 0.4 + Math.random() * 0.2;
+      challengeBtnText.innerText = "...";
+      challengeResultText.innerText = "ກຳລັງໝຸນ...";
+      partnerAssignedText.classList.add("hidden");
+      backToMainBtn.classList.add("hidden");
+
+      function animChallenge() {
+        challengeVelocity *= 0.985;
+        challengeAngle = (challengeAngle + challengeVelocity) % (Math.PI * 2);
+
+        // カチカチ音
+        const count = CHALLENGE_ITEMS.length;
+        const slice = (Math.PI * 2) / count;
+        const pAngle = Math.PI * 1.5;
+        let local = (pAngle - challengeAngle) % (Math.PI * 2);
+        if (local < 0) local += Math.PI * 2;
+        const curPin = Math.floor(local / slice);
+        if (curPin !== challengeLastPin) {
+          challengeLastPin = curPin;
+          playTickSound();
+        }
+
+        drawChallengeWheel();
+
+        if (challengeVelocity < 0.002) {
+          isChallengeSpinning = false;
+          hasChallengeSpun = true; // 1回のみ回せるようにフラグを確定
+          challengeBtnText.innerText = "ຈົບ";
+          challengeWheelContainer.classList.add("pointer-events-none", "opacity-80");
+
+          const winIdx = curPin % count;
+          const challengeResult = CHALLENGE_ITEMS[winIdx];
+          challengeResultText.innerHTML = `ຜົນ: <span class="text-amber-300 font-black text-sm">${challengeResult}</span>`;
+          playWinSound();
+
+          // 「一緒に飲む人を指名」の場合、参加者からランダムにペアを自動提案
+          if (challengeResult.includes("ເລືອກຄົນດື່ມນຳ")) {
+            const others = items.filter(n => n !== currentWinner);
+            const partner = others.length > 0 ? others[Math.floor(Math.random() * others.length)] : "ໝູ່ຂ້າງໆ";
+            partnerAssignedText.innerText = `👉 ດື່ມຄູ່ກັບ: 【 ${partner} 】!`;
+            partnerAssignedText.classList.remove("hidden");
+          }
+
+          // 最初の画面に戻るボタンを表示
+          backToMainBtn.classList.remove("hidden");
+          return;
+        }
+        requestAnimationFrame(animChallenge);
+      }
+      requestAnimationFrame(animChallenge);
+    }
+
+    startChallengeBtn.addEventListener("click", () => {
+      // 当選モーダルを閉じてチャレンジモーダルを開く
+      closeResultBtn.click();
+      challengeTargetName.innerText = currentWinner || "ຜູ້ຫຼິ້ນ";
+      challengeResultText.innerText = "ກົດທີ່ວົງລໍ້ເພື່ອສຸ່ມຄຳທ້າທາຍ!";
+      partnerAssignedText.classList.add("hidden");
+      
+      // 状態リセット（1回のみ回せる制御）
+      hasChallengeSpun = false;
+      isChallengeSpinning = false;
+      challengeBtnText.innerText = "ໝຸນ!";
+      challengeWheelContainer.classList.remove("pointer-events-none", "opacity-80");
+      backToMainBtn.classList.add("hidden");
+
+      challengeModal.classList.remove("opacity-0", "pointer-events-none");
+      setTimeout(resizeChallengeCanvas, 50);
+    });
+
+    closeChallengeModalBtn.addEventListener("click", () => {
+      challengeModal.classList.add("opacity-0", "pointer-events-none");
+    });
+
+    // 最初の画面に戻るボタンのイベントリスナー
+    backToMainBtn.addEventListener("click", () => {
+      challengeModal.classList.add("opacity-0", "pointer-events-none");
+    });
+
+    challengeWheelContainer.addEventListener("click", startChallengeSpin);
+
+    // ルーレットまたは中央ボタンのタップで回転トリガー
+    wheelContainer.addEventListener("click", (e) => {
+      if (!resultModal.classList.contains("pointer-events-none")) return;
+      if (!editModal.classList.contains("pointer-events-none")) return;
+      startSpin();
+    });
+
+    const editModal = document.getElementById("editModal");
+    const openEditBtn = document.getElementById("openEditBtn");
+    const closeEditBtn = document.getElementById("closeEditBtn");
+    const saveEditBtn = document.getElementById("saveEditBtn");
+    const itemListContainer = document.getElementById("itemListContainer");
+    const addItemForm = document.getElementById("addItemForm");
+    const newItemInput = document.getElementById("newItemInput");
+    const resetDefaultsBtn = document.getElementById("resetDefaultsBtn");
+    const itemCountDisplay = document.getElementById("itemCountDisplay");
+
+    let tempItems = [];
+
+    function escapeHtml(str) {
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function renderEditItemsList() {
+      itemListContainer.innerHTML = "";
+      if (tempItems.length === 0) {
+        itemListContainer.innerHTML = `<p class="text-xs text-slate-500 py-3 text-center">ບໍ່ມີລາຍການ. ກະລຸນາເພີ່ມລາຍການ.</p>`;
+        return;
+      }
+
+      tempItems.forEach((text, index) => {
+        const row = document.createElement("div");
+        row.className = "flex items-center justify-between gap-2 p-1.5 px-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-sm focus-within:border-amber-500/60 transition";
+        const color = COLOR_PALETTES[index % COLOR_PALETTES.length];
+
+        row.innerHTML = `
+          <div class="flex items-center gap-2 flex-1 min-w-0">
+            <span class="w-3.5 h-3.5 rounded-full flex-shrink-0 shadow-sm" style="background-color: ${color}"></span>
+            <input 
+              type="text" 
+              data-index="${index}" 
+              maxlength="20" 
+              value="${escapeHtml(text)}" 
+              placeholder="ປ້ອນຊື່ລາຍການ"
+              class="item-name-input flex-1 bg-transparent text-slate-200 font-bold focus:text-white focus:outline-none text-sm py-1 border-b border-transparent focus:border-amber-400/50 transition truncate"
+            />
+          </div>
+          <button type="button" data-index="${index}" class="delete-item-btn text-slate-500 hover:text-red-400 p-1.5 transition active:scale-90 flex-shrink-0" title="ລຶບ">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+          </button>
+        `;
+        itemListContainer.appendChild(row);
+      });
+
+      // インラインテキスト編集のリスナー
+      itemListContainer.querySelectorAll(".item-name-input").forEach(input => {
+        input.addEventListener("input", () => {
+          const idx = parseInt(input.getAttribute("data-index"), 10);
+          tempItems[idx] = input.value;
+        });
+
+        input.addEventListener("blur", () => {
+          const idx = parseInt(input.getAttribute("data-index"), 10);
+          if (!tempItems[idx].trim()) {
+            tempItems[idx] = `ລາຍການ ${idx + 1}`;
+            input.value = tempItems[idx];
+          } else {
+            tempItems[idx] = tempItems[idx].trim();
+            input.value = tempItems[idx];
+          }
+        });
+      });
+
+      // 削除ボタンリスナー
+      itemListContainer.querySelectorAll(".delete-item-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const idx = parseInt(btn.getAttribute("data-index"), 10);
+          if (tempItems.length <= 2) {
+            showToast("ຕ້ອງມີຢ່າງໜ້ອຍ 2 ລາຍການ");
+            return;
+          }
+          tempItems.splice(idx, 1);
+          renderEditItemsList();
+        });
+      });
+    }
+
+    openEditBtn.addEventListener("click", () => {
+      if (isSpinning) return;
+      tempItems = [...items];
+      renderEditItemsList();
+      editModal.classList.remove("opacity-0", "pointer-events-none");
+    });
+
+    function closeEditor() {
+      editModal.classList.add("opacity-0", "pointer-events-none");
+    }
+
+    closeEditBtn.addEventListener("click", closeEditor);
+
+    saveEditBtn.addEventListener("click", () => {
+      const cleanedItems = tempItems.map((item, idx) => item.trim() || `ລາຍການ ${idx + 1}`);
+      if (cleanedItems.length < 2) {
+        showToast("ກະລຸນາຕັ້ງຄ່າ 2 ລາຍການຂຶ້ນໄປ");
+        return;
+      }
+      items = [...cleanedItems];
+      itemCountDisplay.innerText = `ລາຍຊື່: ${items.length} ຄົນ`;
+      closeEditor();
+      drawWheel();
+    });
+
+    addItemForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const val = newItemInput.value.trim();
+      if (!val) return;
+      if (tempItems.length >= 24) {
+        showToast("ລາຍການສູງສຸດ 24 ລາຍການ");
+        return;
+      }
+      tempItems.push(val);
+      newItemInput.value = "";
+      renderEditItemsList();
+      itemListContainer.scrollTop = itemListContainer.scrollHeight;
+    });
+
+    document.querySelectorAll(".preset-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const key = btn.getAttribute("data-preset");
+        if (PRESETS[key]) {
+          tempItems = [...PRESETS[key]];
+          renderEditItemsList();
+        }
+      });
+    });
+
+    resetDefaultsBtn.addEventListener("click", () => {
+      tempItems = [...PRESETS.default];
+      renderEditItemsList();
+    });
+
+    const soundToggleBtn = document.getElementById("soundToggleBtn");
+    const soundIconOn = document.getElementById("soundIconOn");
+    const soundIconOff = document.getElementById("soundIconOff");
+
+    soundToggleBtn.addEventListener("click", () => {
+      initAudio();
+      isSoundEnabled = !isSoundEnabled;
+      if (isSoundEnabled) {
+        soundIconOn.classList.remove("hidden");
+        soundIconOff.classList.add("hidden");
+      } else {
+        soundIconOn.classList.add("hidden");
+        soundIconOff.classList.remove("hidden");
+      }
+    });
+
+    function showToast(message) {
+      const toast = document.createElement("div");
+      toast.className = "fixed bottom-16 left-1/2 -translate-x-1/2 z-50 bg-slate-800 text-amber-300 border border-amber-400/40 px-4 py-2 rounded-xl text-xs font-bold shadow-xl transition-all duration-300 opacity-0 transform translate-y-2 pointer-events-none";
+      toast.innerText = message;
+      document.body.appendChild(toast);
+      
+      requestAnimationFrame(() => {
+        toast.classList.remove("opacity-0", "translate-y-2");
+      });
+
+      setTimeout(() => {
+        toast.classList.add("opacity-0", "translate-y-2");
+        setTimeout(() => toast.remove(), 300);
+      }, 2000);
+    }
+
+    // アプリ起動時の初期化
+    window.addEventListener("load", () => {
+      resizeCanvas();
+      itemCountDisplay.innerText = `ລາຍຊື່: ${items.length} ຄົນ`;
+    });
+  </script>
+</body>
+</html>

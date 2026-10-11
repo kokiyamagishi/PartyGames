@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>ເກມຣູເລັດລະເບີດ 1/16 - DANGER ROULETTE</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700;800&family=Noto+Sans+Lao:wght@400;600;700;800;900&family=Mochiy+Pop+One&display=swap');
+
+    body {
+      font-family: 'Noto Sans Lao', 'Chakra Petch', sans-serif;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+      background: radial-gradient(circle at center, #3a3d40 0%, #18191b 100%);
+    }
+
+    /* ハザードストライプ（警告縞模様） */
+    .hazard-border {
+      background: repeating-linear-gradient(
+        -45deg,
+        #facc15,
+        #facc15 14px,
+        #111827 14px,
+        #111827 28px
+      );
+      box-shadow: inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -3px 6px rgba(0,0,0,0.8), 0 10px 25px rgba(0,0,0,0.7);
+    }
+
+    /* 金属プレートパネル */
+    .steel-panel {
+      background: linear-gradient(145deg, #a8adb5, #888d95);
+      box-shadow: inset 2px 2px 6px rgba(255, 255, 255, 0.4),
+                  inset -3px -3px 8px rgba(0, 0, 0, 0.5);
+    }
+
+    /* 3D押しボタンスタイリング */
+    .push-button-bezel {
+      background: linear-gradient(135deg, #e5e7eb 0%, #9ca3af 50%, #4b5563 100%);
+      box-shadow: 0 5px 12px rgba(0,0,0,0.5), inset 0 1px 2px rgba(255,255,255,0.8);
+    }
+
+    .push-button {
+      background: radial-gradient(circle at 35% 30%, #ff4d4d 0%, #cc0000 60%, #730000 100%);
+      box-shadow: 
+        inset 0 3px 6px rgba(255, 255, 255, 0.6),
+        inset 0 -4px 6px rgba(0, 0, 0, 0.6),
+        0 4px 6px rgba(0, 0, 0, 0.5);
+      transition: all 0.08s ease-out;
+    }
+
+    .push-button:active:not(:disabled) {
+      transform: scale(0.92);
+      box-shadow: 
+        inset 0 4px 10px rgba(0, 0, 0, 0.8),
+        0 1px 2px rgba(0, 0, 0, 0.4);
+    }
+
+    /* 安全に解除されたボタン（緑のへこみ状態） */
+    .push-button.safe {
+      background: radial-gradient(circle at 40% 40%, #22c55e 0%, #15803d 70%, #052e16 100%) !important;
+      box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.8), 0 0 10px rgba(34, 197, 94, 0.5) !important;
+      transform: scale(0.9) !important;
+      filter: brightness(0.85);
+      cursor: default;
+    }
+
+    /* 爆弾が起爆したボタン */
+    .push-button.bombed {
+      background: radial-gradient(circle at 50% 50%, #fff 0%, #ff0000 40%, #300000 100%) !important;
+      box-shadow: 0 0 25px #ff0000, 0 0 40px #ff6600 !important;
+      animation: bombPulse 0.4s infinite alternate;
+    }
+
+    @keyframes bombPulse {
+      from { transform: scale(0.95); }
+      to { transform: scale(1.1); filter: brightness(1.5); }
+    }
+
+    /* 激しい爆発スクリーンシェイク */
+    @keyframes heavyShake {
+      0% { transform: translate(0, 0) rotate(0deg); }
+      10% { transform: translate(-14px, -18px) rotate(-3deg); }
+      20% { transform: translate(16px, 12px) rotate(3.5deg); }
+      30% { transform: translate(-18px, 16px) rotate(-4deg); }
+      40% { transform: translate(14px, -14px) rotate(2deg); }
+      50% { transform: translate(-12px, 10px) rotate(-2deg); }
+      60% { transform: translate(10px, -8px) rotate(1.5deg); }
+      70% { transform: translate(-8px, 6px) rotate(-1deg); }
+      80% { transform: translate(6px, -4px) rotate(0.5deg); }
+      90% { transform: translate(-3px, 2px) rotate(-0.5deg); }
+      100% { transform: translate(0, 0) rotate(0deg); }
+    }
+
+    .shake-active {
+      animation: heavyShake 0.75s cubic-bezier(.36,.07,.19,.97) both;
+    }
+
+    /* 閃光フラッシュ */
+    @keyframes flashWhite {
+      0% { opacity: 0.95; }
+      40% { opacity: 0.8; }
+      100% { opacity: 0; }
+    }
+
+    .flash-active {
+      animation: flashWhite 0.8s ease-out forwards;
+    }
+    /* シネマティック赤い警戒フラッシュ & ディストーション */
+    @keyframes alertRedStrobe {
+      0% { background-color: rgba(220, 38, 38, 0.85); filter: contrast(180%) brightness(1.3); }
+      15% { background-color: rgba(0, 0, 0, 0.95); }
+      30% { background-color: rgba(255, 69, 0, 0.7); }
+      50% { background-color: rgba(15, 15, 15, 0.8); }
+      100% { background-color: transparent; }
+    }
+
+    .cinematic-blast {
+      animation: alertRedStrobe 1.2s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-2 sm:p-4 overflow-hidden relative">
+
+  <!-- フラッシュオーバーレイ -->
+  <div id="flash-overlay" class="fixed inset-0 bg-white pointer-events-none z-50 opacity-0"></div>
+  
+  <!-- フルスクリーン爆発Canvas -->
+  <canvas id="explosion-canvas" class="fixed inset-0 pointer-events-none z-40 w-full h-full"></canvas>
+
+  <!-- メイン筐体コンソール -->
+  <main id="console-wrapper" class="relative w-full max-w-[390px] aspect-[9/18.5] max-h-[92vh] flex flex-col items-center justify-center transition-transform">
+    
+    <!-- 外装ケース（画像のような上下のグレー金属バーと中央の警告枠） -->
+    <div class="w-full h-full bg-[#9da2aa] rounded-2xl p-2.5 sm:p-3 flex flex-col justify-between shadow-2xl border-2 border-[#5a5f66] relative overflow-hidden">
+      
+      <!-- 上部メタルヘッダーパネル -->
+      <div class="w-full h-10 sm:h-12 flex items-center justify-between px-3 mb-1">
+        <div class="flex items-center gap-1.5">
+          <span class="w-2.5 h-2.5 rounded-full bg-red-600 animate-ping"></span>
+          <span class="text-xs tracking-wider font-black text-gray-800">ຕັ້ງລະເບີດ : 1/16</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <!-- サウンドテスト・状態ボタン -->
+          <button id="sound-btn" title="ກວດສອບສຽງ / ເປີດ-ປິດ" class="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-gray-900 text-yellow-400 hover:bg-black active:scale-95 transition text-[11px] font-bold border border-yellow-500 shadow-sm">
+            <i id="sound-icon" class="fa-solid fa-volume-high text-xs"></i>
+            <span id="sound-label">ສຽງ</span>
+          </button>
+          <div class="text-[11px] font-bold tracking-wider text-gray-700 bg-gray-300/80 px-2 py-0.5 rounded border border-gray-400">
+            ປອດໄພ: <span id="safe-counter" class="text-emerald-700 font-extrabold text-sm">0</span> / 15
+          </div>
+        </div>
+      </div>
+
+      <!-- 黄黒ハザードフレーム本体 -->
+      <div class="hazard-border w-full flex-1 rounded-xl p-3 sm:p-3.5 flex flex-col justify-between relative shadow-inner">
+        
+        <!-- 内側スチールプレート -->
+        <div class="steel-panel w-full flex-1 rounded-lg p-3 sm:p-4 flex flex-col justify-center items-center shadow-2xl relative">
+          
+          <!-- 4x4ボタングリッド -->
+          <div id="grid-container" class="grid grid-cols-4 gap-3 sm:gap-4 w-full aspect-square max-w-[310px]">
+            <!-- ボタンはJSで生成 -->
+          </div>
+
+        </div>
+
+        <!-- 下部操作バー（再起動・情報） -->
+        <div class="w-full mt-2.5 flex justify-between items-center px-1">
+          <!-- リセットボタン -->
+          <button id="quick-reset-btn" title="ເລີ່ມໃໝ່" class="w-8 h-8 rounded-full bg-white text-gray-800 hover:bg-gray-100 active:scale-90 transition-all flex items-center justify-center shadow-lg border border-gray-400 focus:outline-none">
+            <i class="fa-solid fa-arrows-rotate text-sm"></i>
+          </button>
+          
+          <div class="text-[10px] text-zinc-900 font-black tracking-wider bg-yellow-400/90 px-2.5 py-0.5 rounded border border-zinc-900 shadow-sm">
+            ອັນຕະລາຍລະເບີດ
+          </div>
+
+          <!-- インフォボタン -->
+          <button id="info-btn" title="ວິທີຫຼິ້ນ" class="w-8 h-8 rounded-full bg-white text-gray-800 hover:bg-gray-100 active:scale-90 transition-all flex items-center justify-center shadow-lg border border-gray-400 focus:outline-none">
+            <i class="fa-solid fa-info text-xs font-serif font-black"></i>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- 下部スチールフッター -->
+      <div class="w-full h-8 flex flex-col items-center justify-center">
+        <p class="text-[9px] tracking-wider uppercase text-gray-700 font-bold">ແຜງປຸ່ມກົດແຮງດັນສ່ຽງໄພ 1 ໃນ 16</p>
+        <p id="audio-hint" class="text-[8px] text-gray-500 font-medium tracking-tight">※ ຖ້າບໍ່ໄດ້ຍິນສຽງ ກະລຸນາກວດເບິ່ງການປິດສຽງ ຫຼື ເພີ່ມລະດັບສຽງ</p>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- 爆破ゲームオーバーモーダル -->
+  <div id="game-over-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300 p-4">
+    <div class="bg-gradient-to-b from-neutral-900 via-stone-900 to-black border-4 border-red-600 rounded-3xl p-6 sm:p-8 max-w-sm w-full text-center shadow-[0_0_50px_rgba(239,68,68,0.7)] transform scale-90 transition-transform duration-300" id="modal-box">
+      
+      <div class="w-20 h-20 mx-auto mb-3 rounded-full bg-red-600/20 border-2 border-red-500 flex items-center justify-center animate-bounce">
+        <i class="fa-solid fa-bomb text-4xl text-red-500"></i>
+      </div>
+
+      <h2 class="text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-orange-400 to-yellow-400 tracking-wider mb-1">
+        ຕູມມມມ!!
+      </h2>
+      <p class="text-red-400 font-bold text-sm tracking-wide mb-2">ລະເບີດແຕກຂຶ້ນແລ້ວ!</p>
+      
+      <div class="bg-neutral-800/80 rounded-xl p-3 mb-6 border border-neutral-700">
+        <div class="text-xs text-gray-400">ຈຳນວນປົດລັອກສຳເລັດ</div>
+        <div class="text-2xl font-black text-yellow-400"><span id="final-safe-count">0</span> / 15</div>
+      </div>
+
+      <button id="restart-modal-btn" class="w-full py-4 px-6 bg-gradient-to-r from-red-600 via-orange-600 to-yellow-500 hover:brightness-110 active:scale-95 text-white font-black text-lg tracking-wider rounded-2xl shadow-xl transition-all duration-150 flex items-center justify-center gap-3 border-t border-yellow-300">
+        <i class="fa-solid fa-rotate-right text-xl"></i>
+        <span>ເກມໃໝ່</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- オールクリアモーダル（15個すべて解除できた場合） -->
+  <div id="win-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300 p-4">
+    <div class="bg-gradient-to-b from-neutral-900 to-stone-950 border-4 border-emerald-500 rounded-3xl p-6 sm:p-8 max-w-sm w-full text-center shadow-[0_0_50px_rgba(16,185,129,0.7)] transform scale-90 transition-transform duration-300" id="win-modal-box">
+      <div class="w-20 h-20 mx-auto mb-3 rounded-full bg-emerald-500/20 border-2 border-emerald-400 flex items-center justify-center animate-pulse">
+        <i class="fa-solid fa-trophy text-4xl text-yellow-400"></i>
+      </div>
+      <h2 class="text-3xl font-black text-emerald-400 tracking-wider mb-2">ສຳເລັດທັງໝົດ!</h2>
+      <p class="text-gray-300 font-bold text-sm mb-6 leading-relaxed">ມະຫັດສະຈັນ! ທ່ານກົດປຸ່ມປອດໄພຄົບທັງ 15 ປຸ່ມໂດຍບໍ່ຖືກລະເບີດເລີຍ!</p>
+      <button id="win-restart-btn" class="w-full py-4 px-6 bg-gradient-to-r from-emerald-500 to-teal-600 hover:brightness-110 active:scale-95 text-white font-black text-lg tracking-wider rounded-2xl shadow-xl transition-all flex items-center justify-center gap-3">
+        <i class="fa-solid fa-rotate-right text-xl"></i>
+        <span>ເກມໃໝ່</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 説明モーダル -->
+  <div id="info-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs opacity-0 pointer-events-none transition-opacity duration-200 p-4">
+    <div class="bg-neutral-900 border-2 border-yellow-400 rounded-2xl p-6 max-w-xs w-full text-white text-left shadow-2xl">
+      <h3 class="text-lg font-bold text-yellow-400 mb-2 flex items-center gap-2">
+        <i class="fa-solid fa-triangle-exclamation"></i> ກະຕິກາ
+      </h3>
+      <ul class="text-xs text-gray-300 space-y-2 list-disc list-inside mb-5 leading-relaxed">
+        <li>ໃນຈຳນວນ 16 ປຸ່ມ, ມີລະເບີດຖືກເຊື່ອງໄວ້ພຽງ <span class="text-red-400 font-bold">1 ປຸ່ມ</span> ເທົ່ານັ້ນ.</li>
+        <li>ມີໂອກາດ 1/16 ທີ່ຈະເກີດການລະເບີດຄັ້ງໃຫຍ່!</li>
+        <li>ປຸ່ມທີ່ປອດໄພຈະປ່ຽນເປັນສີຂຽວ.</li>
+        <li>ມາທົດສອບຄວາມກ້າຫານຂອງທ່ານ ວ່າຈະກົດໄດ້ຫຼາຍປານໃດ!</li>
+      </ul>
+      <button id="close-info-btn" class="w-full py-2 bg-yellow-400 text-black font-extrabold rounded-xl hover:bg-yellow-300 active:scale-95">ປິດ</button>
+    </div>
+  </div>
+
+  <script>
+    // --- 強化版リアルタイム・シネマティック音響エンジン (iOS/Android/PC互換) ---
+    class SoundFX {
+      constructor() {
+        this.ctx = null;
+        this.masterCompressor = null;
+        this.masterGain = null;
+        this.isMuted = false;
+        this.unlocked = false;
+      }
+
+      // 確実なオーディオコンテキスト起動 & iOSアンロック
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioContext();
+
+          // 音割れを防ぎ音圧をハリウッド映画並みに引き上げるマスターコンプレッサー
+          this.masterCompressor = this.ctx.createDynamicsCompressor();
+          this.masterCompressor.threshold.setValueAtTime(-18, this.ctx.currentTime);
+          this.masterCompressor.knee.setValueAtTime(12, this.ctx.currentTime);
+          this.masterCompressor.ratio.setValueAtTime(10, this.ctx.currentTime);
+          this.masterCompressor.attack.setValueAtTime(0.003, this.ctx.currentTime);
+          this.masterCompressor.release.setValueAtTime(0.25, this.ctx.currentTime);
+
+          this.masterGain = this.ctx.createGain();
+          this.masterGain.gain.setValueAtTime(1.0, this.ctx.currentTime);
+
+          this.masterCompressor.connect(this.masterGain);
+          this.masterGain.connect(this.ctx.destination);
+        }
+
+        // サスペンド状態の自動解除
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+
+        // iOS Safari対策: 1サンプルの無音バッファを再生してオーディオパイプラインを即座に開通
+        if (!this.unlocked && this.ctx) {
+          try {
+            const silentBuffer = this.ctx.createBuffer(1, 1, 22050);
+            const silentSource = this.ctx.createBufferSource();
+            silentSource.buffer = silentBuffer;
+            silentSource.connect(this.ctx.destination);
+            silentSource.start(0);
+            this.unlocked = true;
+          } catch (e) {
+            console.warn('Audio unlock notice:', e);
+          }
+        }
+      }
+
+      // カチッという重みのあるメカニカルスイッチ音
+      playClick() {
+        if (this.isMuted) return;
+        this.init();
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(520, t);
+        osc.frequency.exponentialRampToValueAtTime(60, t + 0.04);
+
+        gain.gain.setValueAtTime(0.8, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.045);
+
+        osc.connect(gain);
+        gain.connect(this.masterCompressor);
+
+        osc.start(t);
+        osc.stop(t + 0.05);
+      }
+
+      // 安全解除音（爽快なデジタルチャイム）
+      playSafe() {
+        if (this.isMuted) return;
+        this.init();
+        const t = this.ctx.currentTime;
+        
+        // 2和音の明るいコード
+        [659.25, 987.77].forEach((freq, i) => { // E5, B5
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, t + i * 0.03);
+          osc.frequency.exponentialRampToValueAtTime(freq * 1.25, t + 0.15);
+
+          gain.gain.setValueAtTime(0.28, t + i * 0.03);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
+
+          osc.connect(gain);
+          gain.connect(this.masterCompressor);
+
+          osc.start(t + i * 0.03);
+          osc.stop(t + 0.3);
+        });
+      }
+
+      // 映画品質の超ド迫力シネマティック大爆発音
+      playExplosion() {
+        if (this.isMuted) return;
+        this.init();
+        const t = this.ctx.currentTime;
+        const ctx = this.ctx;
+
+        // レイヤー 1: 炸薬の瞬間アタック（強烈なパンチスナップ）
+        const kickOsc = ctx.createOscillator();
+        const kickGain = ctx.createGain();
+        kickOsc.type = 'sine';
+        kickOsc.frequency.setValueAtTime(260, t);
+        kickOsc.frequency.exponentialRampToValueAtTime(45, t + 0.12);
+
+        kickGain.gain.setValueAtTime(1.0, t);
+        kickGain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+
+        kickOsc.connect(kickGain);
+        kickGain.connect(this.masterCompressor);
+        kickOsc.start(t);
+        kickOsc.stop(t + 0.22);
+
+        // レイヤー 2: シネマティック重低音 (映画のBRAAM / 地響きサブベース)
+        const subOsc = ctx.createOscillator();
+        const subGain = ctx.createGain();
+        subOsc.type = 'sawtooth';
+        subOsc.frequency.setValueAtTime(160, t);
+        subOsc.frequency.exponentialRampToValueAtTime(28, t + 1.6); // 160Hz -> 28Hzへの超重低音ドロップ
+
+        subGain.gain.setValueAtTime(0.9, t);
+        subGain.gain.exponentialRampToValueAtTime(0.35, t + 0.5);
+        subGain.gain.exponentialRampToValueAtTime(0.0001, t + 2.5);
+
+        const subFilter = ctx.createBiquadFilter();
+        subFilter.type = 'lowpass';
+        subFilter.frequency.setValueAtTime(320, t);
+        subFilter.frequency.exponentialRampToValueAtTime(55, t + 1.8);
+
+        subOsc.connect(subFilter);
+        subFilter.connect(subGain);
+        subGain.connect(this.masterCompressor);
+        subOsc.start(t);
+        subOsc.stop(t + 2.6);
+
+        // レイヤー 3: 激しい爆風ホワイトノイズの唸り（エアブラスト）
+        const bufferSize = Math.floor(ctx.sampleRate * 2.2);
+        const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          output[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.6));
+        }
+
+        const noiseNode = ctx.createBufferSource();
+        noiseNode.buffer = noiseBuffer;
+
+        const noiseFilter = ctx.createBiquadFilter();
+        noiseFilter.type = 'lowpass';
+        noiseFilter.frequency.setValueAtTime(4500, t);
+        noiseFilter.frequency.exponentialRampToValueAtTime(100, t + 1.9);
+
+        const noiseGain = ctx.createGain();
+        noiseGain.gain.setValueAtTime(1.0, t);
+        noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 2.1);
+
+        noiseNode.connect(noiseFilter);
+        noiseFilter.connect(noiseGain);
+        noiseGain.connect(this.masterCompressor);
+        noiseNode.start(t);
+        noiseNode.stop(t + 2.2);
+
+        // レイヤー 4: 映画風の耳鳴り（Tinnitus: キィィィィン…）
+        const ringOsc = ctx.createOscillator();
+        const ringGain = ctx.createGain();
+        ringOsc.type = 'sine';
+        ringOsc.frequency.setValueAtTime(3600, t + 0.05);
+
+        ringGain.gain.setValueAtTime(0.0001, t);
+        ringGain.gain.linearRampToValueAtTime(0.16, t + 0.15);
+        ringGain.gain.exponentialRampToValueAtTime(0.0001, t + 2.8);
+
+        ringOsc.connect(ringGain);
+        ringGain.connect(this.masterCompressor);
+        ringOsc.start(t);
+        ringOsc.stop(t + 2.9);
+      }
+
+      // サウンド確認用テスト音（ピッ！）
+      playTestBeep() {
+        this.init();
+        const t = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, t);
+        osc.frequency.setValueAtTime(1320, t + 0.08);
+
+        gain.gain.setValueAtTime(0.3, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+
+        osc.connect(gain);
+        gain.connect(this.masterCompressor);
+        osc.start(t);
+        osc.stop(t + 0.2);
+      }
+
+      // 勝利ファンファーレ
+      playVictory() {
+        if (this.isMuted) return;
+        this.init();
+        const t = this.ctx.currentTime;
+        const notes = [523.25, 659.25, 783.99, 1046.50];
+        notes.forEach((freq, i) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, t + i * 0.12);
+          gain.gain.setValueAtTime(0.22, t + i * 0.12);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + i * 0.12 + 0.35);
+          osc.connect(gain);
+          gain.connect(this.masterCompressor);
+          osc.start(t + i * 0.12);
+          osc.stop(t + i * 0.12 + 0.4);
+        });
+      }
+    }
+
+    // --- Canvas 大爆発パーティクルシステム ---
+    const canvas = document.getElementById('explosion-canvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    let shockwaves = [];
+    let animId = null;
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    class Particle {
+      constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 18 + 4;
+        this.vx = Math.cos(angle) * speed;
+        this.vy = Math.sin(angle) * speed;
+        this.size = Math.random() * 12 + 6;
+        this.alpha = 1;
+        this.decay = Math.random() * 0.02 + 0.015;
+        this.gravity = 0.35;
+        // 火の粉〜炎〜煙の色
+        const colors = ['#ffffff', '#ffeb3b', '#ff9800', '#ff3d00', '#d50000', '#424242'];
+        this.color = colors[Math.floor(Math.random() * colors.length)];
+      }
+
+      update() {
+        this.vx *= 0.96;
+        this.vy *= 0.96;
+        this.vy += this.gravity;
+        this.x += this.vx;
+        this.y += this.vy;
+        this.alpha -= this.decay;
+        this.size *= 0.97;
+      }
+
+      draw() {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, this.alpha);
+        ctx.fillStyle = this.color;
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, Math.max(0.5, this.size), 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    class Shockwave {
+      constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.radius = 10;
+        this.maxRadius = Math.max(window.innerWidth, window.innerHeight) * 0.8;
+        this.alpha = 1;
+        this.speed = 22;
+        this.lineWidth = 14;
+      }
+
+      update() {
+        this.radius += this.speed;
+        this.alpha = 1 - (this.radius / this.maxRadius);
+        this.lineWidth *= 0.97;
+      }
+
+      draw() {
+        if (this.alpha <= 0) return;
+        ctx.save();
+        ctx.globalAlpha = this.alpha;
+        ctx.strokeStyle = '#ff9100';
+        ctx.lineWidth = this.lineWidth;
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = '#ff3d00';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    function triggerExplosionFx(originX, originY) {
+      particles = [];
+      shockwaves = [];
+      
+      // パーティクル大量発生
+      const count = 150;
+      for (let i = 0; i < count; i++) {
+        particles.push(new Particle(originX, originY));
+      }
+      // 2重の衝撃波
+      shockwaves.push(new Shockwave(originX, originY));
+      setTimeout(() => {
+        shockwaves.push(new Shockwave(originX, originY));
+      }, 100);
+
+      if (animId) cancelAnimationFrame(animId);
+      animateFx();
+    }
+
+    function animateFx() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      for (let i = shockwaves.length - 1; i >= 0; i--) {
+        shockwaves[i].update();
+        shockwaves[i].draw();
+        if (shockwaves[i].alpha <= 0) {
+          shockwaves.splice(i, 1);
+        }
+      }
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        particles[i].update();
+        particles[i].draw();
+        if (particles[i].alpha <= 0 || particles[i].size <= 0.5) {
+          particles.splice(i, 1);
+        }
+      }
+
+      if (particles.length > 0 || shockwaves.length > 0) {
+        animId = requestAnimationFrame(animateFx);
+      } else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+
+    // --- ゲームのステート管理 ---
+    const TOTAL_BUTTONS = 16;
+    let bombIndex = -1;
+    let safeClicks = 0;
+    let isGameOver = false;
+
+    const sound = new SoundFX();
+    const gridContainer = document.getElementById('grid-container');
+    const safeCounterEl = document.getElementById('safe-counter');
+    const consoleWrapper = document.getElementById('console-wrapper');
+    const flashOverlay = document.getElementById('flash-overlay');
+
+    const gameOverModal = document.getElementById('game-over-modal');
+    const modalBox = document.getElementById('modal-box');
+    const finalSafeCountEl = document.getElementById('final-safe-count');
+    const restartModalBtn = document.getElementById('restart-modal-btn');
+
+    const winModal = document.getElementById('win-modal');
+    const winModalBox = document.getElementById('win-modal-box');
+    const winRestartBtn = document.getElementById('win-restart-btn');
+
+    const quickResetBtn = document.getElementById('quick-reset-btn');
+    const infoBtn = document.getElementById('info-btn');
+    const infoModal = document.getElementById('info-modal');
+    const closeInfoBtn = document.getElementById('close-info-btn');
+    const soundBtn = document.getElementById('sound-btn');
+    const soundIcon = document.getElementById('sound-icon');
+    const soundLabel = document.getElementById('sound-label');
+
+    // 画面のどこかをタッチまたはクリックした瞬間にWeb Audioを確実にアンロック
+    const unlockOnFirstUserGesture = () => {
+      sound.init();
+      document.removeEventListener('pointerdown', unlockOnFirstUserGesture);
+      document.removeEventListener('touchstart', unlockOnFirstUserGesture);
+    };
+    document.addEventListener('pointerdown', unlockOnFirstUserGesture, { passive: true });
+    document.addEventListener('touchstart', unlockOnFirstUserGesture, { passive: true });
+
+    // サウンドボタン：テスト音再生 & ミュート切替
+    soundBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      sound.init();
+      
+      // テスト音を鳴らして動作確認
+      sound.playTestBeep();
+      
+      // ボタンを一瞬光らせる視覚フィードバック
+      soundBtn.classList.add('ring-2', 'ring-yellow-300');
+      setTimeout(() => soundBtn.classList.remove('ring-2', 'ring-yellow-300'), 250);
+    });
+
+    // 新しいゲームの初期化 (1/16の確率で爆弾配置)
+    function initGame() {
+      isGameOver = false;
+      safeClicks = 0;
+      safeCounterEl.textContent = '0';
+      
+      // 0〜15からランダムに1つの爆弾位置を決定 (1/16の確率)
+      bombIndex = Math.floor(Math.random() * TOTAL_BUTTONS);
+
+      // モーダルを閉じる
+      closeModal(gameOverModal, modalBox);
+      closeModal(winModal, winModalBox);
+
+      // グリッドを再描画
+      gridContainer.innerHTML = '';
+      for (let i = 0; i < TOTAL_BUTTONS; i++) {
+        const bezel = document.createElement('div');
+        bezel.className = 'push-button-bezel rounded-full p-1 sm:p-1.5 flex items-center justify-center aspect-square shadow-md';
+
+        const btn = document.createElement('button');
+        btn.className = 'push-button w-full h-full rounded-full cursor-pointer transition-all duration-100 flex items-center justify-center';
+        btn.dataset.index = i;
+        btn.setAttribute('aria-label', `Button ${i + 1}`);
+
+        // クリックイベント
+        btn.addEventListener('click', (e) => handleButtonClick(i, btn, e));
+
+        bezel.appendChild(btn);
+        gridContainer.appendChild(bezel);
+      }
+    }
+
+    // ボタン押下処理
+    function handleButtonClick(index, btn, event) {
+      if (isGameOver || btn.classList.contains('safe') || btn.classList.contains('bombed')) {
+        return;
+      }
+
+      sound.init();
+
+      // 爆弾をクリックした場合！
+      if (index === bombIndex) {
+        handleBombDetonation(btn, event);
+      } else {
+        // 安全なボタンをクリックした場合
+        handleSafeClick(btn);
+      }
+    }
+
+    // 安全ボタン処理
+    function handleSafeClick(btn) {
+      sound.playClick();
+      setTimeout(() => sound.playSafe(), 40);
+
+      btn.classList.add('safe');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-check text-white text-xs sm:text-sm drop-shadow"></i>';
+
+      safeClicks++;
+      safeCounterEl.textContent = safeClicks;
+
+      // 15個すべて開けられたら完全勝利！
+      if (safeClicks === TOTAL_BUTTONS - 1) {
+        setTimeout(handleVictory, 500);
+      }
+    }
+
+    // 大げさな爆破エフェクトの実行
+    function handleBombDetonation(btn, event) {
+      isGameOver = true;
+      btn.classList.add('bombed');
+      btn.innerHTML = '<i class="fa-solid fa-burst text-white text-sm"></i>';
+
+      // 迫力の映画風サウンド
+      sound.playExplosion();
+
+      // クリック位置（またはボタンの中心）を取得してパーティクル発生
+      const rect = btn.getBoundingClientRect();
+      const originX = event ? (event.clientX || (rect.left + rect.width / 2)) : (rect.left + rect.width / 2);
+      const originY = event ? (event.clientY || (rect.top + rect.height / 2)) : (rect.top + rect.height / 2);
+
+      triggerExplosionFx(originX, originY);
+
+      // 画面激震（スクリーンシェイク）
+      consoleWrapper.classList.remove('shake-active');
+      void consoleWrapper.offsetWidth; // リフロー
+      consoleWrapper.classList.add('shake-active');
+
+      // 閃光フラッシュ & シネマティック赤黒ストロボ
+      flashOverlay.classList.remove('flash-active', 'cinematic-blast');
+      void flashOverlay.offsetWidth;
+      flashOverlay.classList.add('flash-active');
+      document.body.classList.remove('cinematic-blast');
+      void document.body.offsetWidth;
+      document.body.classList.add('cinematic-blast');
+
+      // 他のボタンを無効化
+      const allButtons = gridContainer.querySelectorAll('.push-button');
+      allButtons.forEach(b => {
+        b.disabled = true;
+      });
+
+      // 爆破エフェクトの余韻の後、「新しいゲーム」モーダルを表示
+      setTimeout(() => {
+        finalSafeCountEl.textContent = safeClicks;
+        openModal(gameOverModal, modalBox);
+      }, 1000);
+    }
+
+    // 完全勝利処理
+    function handleVictory() {
+      isGameOver = true;
+      sound.playVictory();
+      openModal(winModal, winModalBox);
+    }
+
+    // モーダルユーティリティ
+    function openModal(modal, box) {
+      modal.classList.remove('opacity-0', 'pointer-events-none');
+      box.classList.remove('scale-90');
+      box.classList.add('scale-100');
+    }
+
+    function closeModal(modal, box) {
+      modal.classList.add('opacity-0', 'pointer-events-none');
+      if (box) {
+        box.classList.remove('scale-100');
+        box.classList.add('scale-90');
+      }
+    }
+
+    // イベントリスナーの登録
+    restartModalBtn.addEventListener('click', () => {
+      sound.playClick();
+      initGame();
+    });
+
+    winRestartBtn.addEventListener('click', () => {
+      sound.playClick();
+      initGame();
+    });
+
+    quickResetBtn.addEventListener('click', () => {
+      sound.playClick();
+      initGame();
+    });
+
+    infoBtn.addEventListener('click', () => {
+      sound.playClick();
+      infoModal.classList.remove('opacity-0', 'pointer-events-none');
+    });
+
+    closeInfoBtn.addEventListener('click', () => {
+      sound.playClick();
+      infoModal.classList.add('opacity-0', 'pointer-events-none');
+    });
+
+    infoModal.addEventListener('click', (e) => {
+      if (e.target === infoModal) {
+        infoModal.classList.add('opacity-0', 'pointer-events-none');
+      }
+    });
+
+    // 起動時の初期化
+    window.onload = () => {
+      initGame();
+    };
+  </script>
+</body>
+</html>
