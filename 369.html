@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>369 - ເກມໄພ້ສາຍດື່ມ</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Tone.js (シンセサイザー音源) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+  <!-- Google Fonts: Noto Sans Lao & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Noto+Sans+Lao:wght@400;600;700;900&display=swap" rel="stylesheet" />
+
+  <style>
+    * {
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    body {
+      font-family: 'Noto Sans Lao', 'Inter', sans-serif;
+      touch-action: manipulation;
+    }
+    /* カードフリップ＆スライド演出 */
+    .card-draw-anim {
+      animation: cardIn 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.2) forwards;
+    }
+    @keyframes cardIn {
+      0% {
+        opacity: 0;
+        transform: translateY(50px) scale(0.85) rotate(-4deg);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1) rotate(0deg);
+      }
+    }
+    /* スタンプ中央ポップアニメーション */
+    .stamp-anim {
+      animation: stampPop 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.35) forwards;
+    }
+    @keyframes stampPop {
+      0% {
+        opacity: 0;
+        transform: scale(0.4) rotate(-8deg);
+      }
+      70% {
+        transform: scale(1.1) rotate(2deg);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+      }
+    }
+    /* 待機時のパルスアニメーション */
+    .pulse-tap {
+      animation: tapPulse 1.8s ease-in-out infinite;
+    }
+    @keyframes tapPulse {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 0.9;
+        text-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+      }
+      50% {
+        transform: scale(1.08);
+        opacity: 1;
+        text-shadow: 0 0 30px rgba(255, 255, 255, 0.9);
+      }
+    }
+    /* DRINK ネオングロー */
+    .card-drink-glow {
+      box-shadow: 0 0 45px rgba(239, 68, 68, 0.85), inset 0 0 20px rgba(239, 68, 68, 0.35);
+      border-color: #ef4444 !important;
+    }
+    /* SELECT ネオングロー */
+    .card-select-glow {
+      box-shadow: 0 0 45px rgba(168, 85, 247, 0.85), inset 0 0 20px rgba(168, 85, 247, 0.35);
+      border-color: #a855f7 !important;
+    }
+  </style>
+</head>
+<body class="bg-neutral-950 text-white min-h-screen h-screen flex flex-col justify-between overflow-hidden select-none">
+
+  <!-- ヘッダー（枚数カウンター＆サウンドボタン） -->
+  <header class="w-full px-5 py-4 flex items-center justify-between z-40">
+    <div id="deck-counter-badge" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-neutral-900/80 border border-neutral-800 text-xs font-semibold tracking-wider text-neutral-400">
+      <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+      <span id="deck-remaining-text">52 / 52</span>
+    </div>
+    
+    <button id="sound-btn" class="w-10 h-10 rounded-full bg-neutral-900/80 border border-neutral-800 flex items-center justify-center text-neutral-300 active:scale-95 transition-transform" aria-label="Toggle Sound">
+      <span id="sound-icon-on" class="text-lg">🔊</span>
+      <span id="sound-icon-off" class="text-lg hidden">🔇</span>
+    </button>
+  </header>
+
+  <main id="app-viewport" class="flex-1 w-full max-w-md mx-auto flex flex-col items-center justify-center relative px-4">
+
+    <!-- 1. タイトル画面 -->
+    <div id="screen-title" class="flex flex-col items-center justify-center text-center w-full z-30 transition-all duration-300">
+      <div class="relative mb-6">
+        <h1 class="text-8xl font-black tracking-tighter bg-gradient-to-br from-amber-200 via-yellow-400 to-amber-600 bg-clip-text text-transparent drop-shadow-[0_10px_20px_rgba(234,179,8,0.3)]">
+          369
+        </h1>
+        <div class="flex items-center justify-center gap-3 text-amber-400/80 text-lg mt-1 tracking-widest font-black">
+          <span>♠</span><span>♥</span><span>♦</span><span>♣</span>
+        </div>
+      </div>
+
+      <button id="btn-start" class="px-8 py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-black font-black text-xl shadow-lg shadow-amber-500/25 active:scale-95 transition-transform flex items-center gap-2">
+        <span>ແຕະເພື່ອເລີ່ມ</span>
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+
+    <!-- 2. 黒い画面（タップ待機） -->
+    <div id="screen-black-tap" class="hidden absolute inset-0 flex flex-col items-center justify-center text-center cursor-pointer z-20">
+      <div class="pulse-tap flex flex-col items-center">
+        <span class="text-6xl sm:text-7xl font-black text-white tracking-wide">ແຕະ</span>
+        <span class="text-xs text-neutral-500 tracking-wider mt-2 font-bold">ແຕະເພື່ອຈົ່ວໄພ້</span>
+      </div>
+    </div>
+
+    <!-- 3. カード表示エリア -->
+    <div id="screen-card-area" class="hidden relative w-full h-full flex flex-col items-center justify-center z-10 cursor-pointer">
+      
+      <!-- トランプカード本体 -->
+      <div id="playing-card" class="card-draw-anim relative w-[260px] h-[390px] sm:w-[280px] h-[410px] rounded-2xl bg-white text-black shadow-2xl p-3 flex flex-col justify-between border-2 border-neutral-300 transition-all duration-200 overflow-hidden">
+        
+        <!-- 背景の透かし -->
+        <div id="card-watermark" class="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none text-9xl font-black">
+          ♠
+        </div>
+
+        <!-- 左上の角（ランク＆スート） -->
+        <div class="absolute top-2.5 left-3 flex flex-col items-center leading-none z-10 pointer-events-none">
+          <span id="rank-top" class="text-3xl sm:text-4xl font-black tracking-tighter">A</span>
+          <span id="suit-top" class="text-2xl sm:text-3xl mt-0.5">♠</span>
+        </div>
+
+        <!-- 右下の角（ランク＆スート：180度反転） -->
+        <div class="absolute bottom-2.5 right-3 flex flex-col items-center leading-none rotate-180 z-10 pointer-events-none">
+          <span id="rank-bottom" class="text-3xl sm:text-4xl font-black tracking-tighter">A</span>
+          <span id="suit-bottom" class="text-2xl sm:text-3xl mt-0.5">♠</span>
+        </div>
+
+        <!-- カード中央領域 (数字またはJQKイラスト) -->
+        <div class="relative z-10 w-full h-full flex items-center justify-center my-auto px-4 py-2">
+          <!-- 数字カード (2-10, A) 用 -->
+          <div id="center-number-view" class="flex flex-col items-center justify-center">
+            <span id="center-suit-icon" class="text-7xl sm:text-8xl">♠</span>
+          </div>
+
+          <!-- 絵札 (J, Q, K) 用イラスト -->
+          <div id="center-face-view" class="hidden w-full h-full max-h-[280px] flex items-center justify-center">
+            <div id="face-svg-slot" class="w-full h-full flex items-center justify-center"></div>
+          </div>
+        </div>
+
+        <!-- 中央ポップアップ演出（DRINK! または SELECT A PERSON） -->
+        <div id="popup-overlay" class="hidden absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
+          
+          <!-- DRINK ポップアップ (3, 6, 9) -->
+          <div id="drink-stamp" class="hidden stamp-anim flex flex-col items-center justify-center px-7 py-4 rounded-2xl bg-gradient-to-br from-red-600 to-rose-700 text-white shadow-2xl border-2 border-red-300/80">
+            <div class="flex items-center gap-2">
+              <span class="text-2xl">🍺</span>
+              <span class="text-4xl sm:text-5xl font-black tracking-wide drop-shadow-md">ດື່ມ!</span>
+              <span class="text-2xl">🍻</span>
+            </div>
+          </div>
+
+          <!-- SELECT A PERSON ポップアップ (A) -->
+          <div id="select-stamp" class="hidden stamp-anim flex flex-col items-center justify-center px-6 py-4 rounded-2xl bg-gradient-to-br from-purple-700 via-indigo-700 to-purple-800 text-white shadow-2xl border-2 border-purple-300/80">
+            <div class="flex items-center gap-2 text-center">
+              <span class="text-2xl">👑</span>
+              <span class="text-2xl sm:text-3xl font-black tracking-wide leading-tight drop-shadow-md">ເລືອກ 1 ຄົນ!</span>
+              <span class="text-2xl">👉</span>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- 4. 終了画面（カード切れ -> シャッフル） -->
+    <div id="screen-gameover" class="hidden flex flex-col items-center justify-center text-center w-full z-30">
+      <div class="w-20 h-20 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-4xl mb-4 shadow-xl">
+        🃏
+      </div>
+      <h2 class="text-4xl font-black tracking-tight text-white mb-2">ໝົດໄພ້ແລ້ວ!</h2>
+      <p class="text-neutral-400 text-sm mb-6">52/52 ໃບຖືກຈົ່ວແລ້ວ</p>
+      
+      <button id="btn-shuffle" class="px-8 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 text-black font-black text-xl shadow-lg shadow-emerald-500/25 active:scale-95 transition-transform flex items-center gap-2">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        <span>ສັບໄພ້ໃໝ່</span>
+      </button>
+    </div>
+
+  </main>
+
+  <footer class="w-full py-4 text-center text-xs text-neutral-600 font-medium">
+    369 CARD GAME
+  </footer>
+
+  <script>
+    // サウンド生成用 Tone.js 設定
+    let audioContextStarted = false;
+    let isSoundMuted = false;
+
+    async function ensureAudio() {
+      if (!audioContextStarted) {
+        try {
+          await Tone.start();
+          audioContextStarted = true;
+        } catch (e) {}
+      }
+    }
+
+    // 効果音1: カード引き (Snap)
+    function playCardDrawSound() {
+      if (isSoundMuted || !audioContextStarted) return;
+      try {
+        const synth = new Tone.MembraneSynth({
+          pitchDecay: 0.008,
+          octaves: 2,
+          oscillator: { type: "sine" },
+          envelope: { attack: 0.001, decay: 0.08, sustain: 0, release: 0.05 }
+        }).toDestination();
+        synth.volume.value = -6;
+        synth.triggerAttackRelease("C4", "32n");
+      } catch (e) {}
+    }
+
+    // 効果音2: DRINK (3, 6, 9)
+    function playDrinkSound() {
+      if (isSoundMuted || !audioContextStarted) return;
+      try {
+        const synth = new Tone.PolySynth(Tone.Synth).toDestination();
+        synth.volume.value = -5;
+        const now = Tone.now();
+        synth.triggerAttackRelease(["E4", "G4", "C5"], "16n", now);
+        synth.triggerAttackRelease(["G4", "B4", "E5"], "8n", now + 0.1);
+      } catch (e) {}
+    }
+
+    // 効果音3: SELECT A PERSON (Ace)
+    function playSelectSound() {
+      if (isSoundMuted || !audioContextStarted) return;
+      try {
+        const synth = new Tone.PolySynth(Tone.Synth).toDestination();
+        synth.volume.value = -5;
+        const now = Tone.now();
+        synth.triggerAttackRelease(["A4", "C#5", "E5"], "16n", now);
+        synth.triggerAttackRelease(["D5", "F#5", "A5"], "8n", now + 0.12);
+      } catch (e) {}
+    }
+
+    // 効果音4: シャッフル音 (パラパラとカードが重なる音)
+    function playShuffleSound() {
+      if (isSoundMuted || !audioContextStarted) return;
+      try {
+        const count = 18;
+        const now = Tone.now();
+        for (let i = 0; i < count; i++) {
+          const delay = now + (i * 0.04) + (Math.random() * 0.008);
+          const noise = new Tone.NoiseSynth({
+            noise: { type: "white" },
+            envelope: { attack: 0.002, decay: 0.03, sustain: 0, release: 0.01 }
+          }).toDestination();
+          noise.volume.value = -12 + (Math.random() * 3);
+          noise.triggerAttackRelease("32n", delay);
+        }
+      } catch (e) {}
+    }
+
+    // J, Q, K の本格人物イラストSVG生成関数
+    function generateFaceCardSvg(rank, suit, isRed) {
+      const primary = isRed ? "#dc2626" : "#1e293b";
+      const secondary = isRed ? "#f87171" : "#475569";
+      const gold = "#eab308";
+      const goldDark = "#ca8a04";
+      const robe = isRed ? "#991b1b" : "#0f172a";
+
+      if (rank === "K") {
+        // King（国王）
+        return \`
+          <svg viewBox="0 0 160 230" class="w-full h-full max-h-[280px]" xmlns="http://www.w3.org/2000/svg">
+            <rect x="5" y="5" width="150" height="220" rx="10" fill="#fffdfa" stroke="\${gold}" stroke-width="2.5" />
+            <rect x="9" y="9" width="142" height="212" rx="7" fill="none" stroke="\${primary}" stroke-width="1.2" stroke-dasharray="3,2" />
+            <path d="M 28 200 C 28 115 132 115 132 200 Z" fill="\${robe}" />
+            <path d="M 45 130 Q 80 148 115 130 L 122 200 L 38 200 Z" fill="\${primary}" />
+            <rect x="68" y="112" width="24" height="22" fill="#fed7aa" />
+            <ellipse cx="80" cy="88" rx="26" ry="30" fill="#fed7aa" stroke="#78350f" stroke-width="1.2" />
+            <path d="M 60 92 Q 80 132 100 92 Q 92 122 80 124 Q 68 122 60 92 Z" fill="#475569" />
+            <path d="M 68 76 Q 73 73 78 76" stroke="#1e293b" stroke-width="1.8" fill="none" />
+            <path d="M 82 76 Q 87 73 92 76" stroke="#1e293b" stroke-width="1.8" fill="none" />
+            <circle cx="73" cy="80" r="2.2" fill="#1e293b" />
+            <circle cx="87" cy="80" r="2.2" fill="#1e293b" />
+            <path d="M 52 64 L 56 42 L 68 54 L 80 34 L 92 54 L 104 42 L 108 64 Z" fill="\${gold}" stroke="\${goldDark}" stroke-width="1.5" />
+            <circle cx="80" cy="34" r="3" fill="\${primary}" />
+            <circle cx="80" cy="155" r="14" fill="#ffffff" stroke="\${gold}" stroke-width="1.5" />
+            <text x="80" y="161" font-size="16" text-anchor="middle" dominant-baseline="central" fill="\${primary}">\${suit}</text>
+            <text x="80" y="218" font-size="11" font-weight="900" text-anchor="middle" fill="\${primary}" letter-spacing="2">KING</text>
+          </svg>
+        \`;
+      } else if (rank === "Q") {
+        // Queen（女王）
+        return \`
+          <svg viewBox="0 0 160 230" class="w-full h-full max-h-[280px]" xmlns="http://www.w3.org/2000/svg">
+            <rect x="5" y="5" width="150" height="220" rx="10" fill="#fffdfa" stroke="\${gold}" stroke-width="2.5" />
+            <rect x="9" y="9" width="142" height="212" rx="7" fill="none" stroke="\${primary}" stroke-width="1.2" stroke-dasharray="3,2" />
+            <path d="M 46 80 C 35 125 40 180 55 200 C 68 180 56 125 56 80 Z" fill="#b45309" />
+            <path d="M 114 80 C 125 125 120 180 105 200 C 92 180 104 125 104 80 Z" fill="#b45309" />
+            <path d="M 34 200 C 34 125 126 125 126 200 Z" fill="\${robe}" />
+            <path d="M 52 140 Q 80 165 108 140 L 116 200 L 44 200 Z" fill="\${primary}" />
+            <ellipse cx="80" cy="85" rx="23" ry="28" fill="#ffedd5" stroke="#78350f" stroke-width="1.2" />
+            <path d="M 57 78 Q 80 62 103 78 Q 94 68 80 68 Q 66 68 57 78 Z" fill="#b45309" />
+            <circle cx="73" cy="82" r="2" fill="#1e293b" />
+            <circle cx="87" cy="82" r="2" fill="#1e293b" />
+            <path d="M 75 99 Q 80 103 85 99 Z" fill="#e11d48" />
+            <path d="M 60 62 L 65 46 L 73 54 L 80 40 L 87 54 L 95 46 L 100 62 Z" fill="\${gold}" stroke="\${goldDark}" stroke-width="1.4" />
+            <circle cx="80" cy="40" r="2.5" fill="#f43f5e" />
+            <circle cx="80" cy="165" r="16" fill="#fff" stroke="\${gold}" stroke-width="1.5" />
+            <text x="80" y="172" font-size="18" text-anchor="middle" dominant-baseline="central" fill="\${primary}">\${suit}</text>
+            <text x="80" y="218" font-size="11" font-weight="900" text-anchor="middle" fill="\${primary}" letter-spacing="2">QUEEN</text>
+          </svg>
+        \`;
+      } else {
+        // Jack（騎士/若武者）
+        return \`
+          <svg viewBox="0 0 160 230" class="w-full h-full max-h-[280px]" xmlns="http://www.w3.org/2000/svg">
+            <rect x="5" y="5" width="150" height="220" rx="10" fill="#fffdfa" stroke="\${gold}" stroke-width="2.5" />
+            <rect x="9" y="9" width="142" height="212" rx="7" fill="none" stroke="\${primary}" stroke-width="1.2" stroke-dasharray="3,2" />
+            <path d="M 30 200 C 30 120 130 120 130 200 Z" fill="\${robe}" />
+            <path d="M 50 136 L 80 156 L 110 136 L 118 200 L 42 200 Z" fill="\${primary}" />
+            <ellipse cx="80" cy="86" rx="24" ry="28" fill="#ffedd5" stroke="#78350f" stroke-width="1.2" />
+            <circle cx="72" cy="82" r="2.2" fill="#1e293b" />
+            <circle cx="88" cy="82" r="2.2" fill="#1e293b" />
+            <ellipse cx="80" cy="62" rx="36" ry="12" fill="\${secondary}" stroke="\${primary}" stroke-width="1.5" />
+            <path d="M 52 60 Q 30 30 38 18 Q 48 30 56 50 Z" fill="\${gold}" stroke="\${goldDark}" stroke-width="1.2" />
+            <circle cx="80" cy="165" r="15" fill="#fff" stroke="\${gold}" stroke-width="1.5" />
+            <text x="80" y="172" font-size="17" text-anchor="middle" dominant-baseline="central" fill="\${primary}">\${suit}</text>
+            <text x="80" y="218" font-size="11" font-weight="900" text-anchor="middle" fill="\${primary}" letter-spacing="2">JACK</text>
+          </svg>
+        \`;
+      }
+    }
+
+    const SUITS = [
+      { name: "spade", symbol: "♠", isRed: false },
+      { name: "heart", symbol: "♥", isRed: true },
+      { name: "diamond", symbol: "♦", isRed: true },
+      { name: "club", symbol: "♣", isRed: false },
+    ];
+    const RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+
+    let deck = [];
+    let currentCardIndex = -1;
+
+    // DOM Elements
+    const screenTitle = document.getElementById("screen-title");
+    const screenBlackTap = document.getElementById("screen-black-tap");
+    const screenCardArea = document.getElementById("screen-card-area");
+    const screenGameover = document.getElementById("screen-gameover");
+
+    const btnStart = document.getElementById("btn-start");
+    const btnShuffle = document.getElementById("btn-shuffle");
+    const soundBtn = document.getElementById("sound-btn");
+    const soundIconOn = document.getElementById("sound-icon-on");
+    const soundIconOff = document.getElementById("sound-icon-off");
+    const deckRemainingText = document.getElementById("deck-remaining-text");
+
+    const playingCard = document.getElementById("playing-card");
+    const rankTop = document.getElementById("rank-top");
+    const suitTop = document.getElementById("suit-top");
+    const rankBottom = document.getElementById("rank-bottom");
+    const suitBottom = document.getElementById("suit-bottom");
+    const cardWatermark = document.getElementById("card-watermark");
+
+    const centerNumberView = document.getElementById("center-number-view");
+    const centerSuitIcon = document.getElementById("center-suit-icon");
+    const centerFaceView = document.getElementById("center-face-view");
+    const faceSvgSlot = document.getElementById("face-svg-slot");
+
+    const popupOverlay = document.getElementById("popup-overlay");
+    const drinkStamp = document.getElementById("drink-stamp");
+    const selectStamp = document.getElementById("select-stamp");
+
+    // デッキ作成 & シャッフル
+    function initDeck() {
+      deck = [];
+      for (const s of SUITS) {
+        for (const r of RANKS) {
+          deck.push({ rank: r, suit: s.symbol, isRed: s.isRed });
+        }
+      }
+      // Fisher-Yates シャッフル
+      for (let i = deck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [deck[i], deck[j]] = [deck[j], deck[i]];
+      }
+      currentCardIndex = -1;
+      updateCounter();
+    }
+
+    function updateCounter() {
+      const remaining = deck.length - (currentCardIndex + 1);
+      deckRemainingText.textContent = \`\${Math.max(0, remaining)} / 52\`;
+    }
+
+    // カード描画
+    function renderCard(card) {
+      const colorClass = card.isRed ? "text-rose-600" : "text-neutral-900";
+
+      // 左右の角
+      rankTop.textContent = card.rank;
+      rankTop.className = \`text-3xl sm:text-4xl font-black tracking-tighter \${colorClass}\`;
+      suitTop.textContent = card.suit;
+      suitTop.className = \`text-2xl sm:text-3xl mt-0.5 \${colorClass}\`;
+
+      rankBottom.textContent = card.rank;
+      rankBottom.className = \`text-3xl sm:text-4xl font-black tracking-tighter \${colorClass}\`;
+      suitBottom.textContent = card.suit;
+      suitBottom.className = \`text-2xl sm:text-3xl mt-0.5 \${colorClass}\`;
+
+      cardWatermark.textContent = card.suit;
+
+      // J, Q, K かどうか
+      const isFace = ["J", "Q", "K"].includes(card.rank);
+      if (isFace) {
+        centerNumberView.classList.add("hidden");
+        centerFaceView.classList.remove("hidden");
+        faceSvgSlot.innerHTML = generateFaceCardSvg(card.rank, card.suit, card.isRed);
+      } else {
+        centerFaceView.classList.add("hidden");
+        centerNumberView.classList.remove("hidden");
+        centerSuitIcon.textContent = card.suit;
+        centerSuitIcon.className = \`text-7xl sm:text-8xl \${colorClass}\`;
+      }
+
+      // 特別演出（3, 6, 9 または A）
+      playingCard.classList.remove("card-drink-glow", "card-select-glow");
+      popupOverlay.classList.add("hidden");
+      drinkStamp.classList.add("hidden");
+      selectStamp.classList.add("hidden");
+
+      if (["3", "6", "9"].includes(card.rank)) {
+        playingCard.classList.add("card-drink-glow");
+        popupOverlay.classList.remove("hidden");
+        drinkStamp.classList.remove("hidden");
+        playDrinkSound();
+      } else if (card.rank === "A") {
+        playingCard.classList.add("card-select-glow");
+        popupOverlay.classList.remove("hidden");
+        selectStamp.classList.remove("hidden");
+        playSelectSound();
+      } else {
+        playCardDrawSound();
+      }
+
+      // ドローアニメーションをリトリガー
+      playingCard.classList.remove("card-draw-anim");
+      void playingCard.offsetWidth;
+      playingCard.classList.add("card-draw-anim");
+    }
+
+    // カードドロー処理
+    function drawNextCard() {
+      currentCardIndex++;
+      updateCounter();
+
+      if (currentCardIndex >= deck.length) {
+        // カード切れ
+        screenCardArea.classList.add("hidden");
+        screenBlackTap.classList.add("hidden");
+        screenGameover.classList.remove("hidden");
+        return;
+      }
+
+      // カード画面を表示
+      screenBlackTap.classList.add("hidden");
+      screenCardArea.classList.remove("hidden");
+      renderCard(deck[currentCardIndex]);
+    }
+
+    // 1. スタートボタン
+    btnStart.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      await ensureAudio();
+      initDeck();
+      screenTitle.classList.add("hidden");
+      screenBlackTap.classList.remove("hidden");
+    });
+
+    // 2. 黒い待機画面タップ
+    screenBlackTap.addEventListener("click", async () => {
+      await ensureAudio();
+      drawNextCard();
+    });
+
+    // 3. カード表示画面タップ（次のカードへ）
+    screenCardArea.addEventListener("click", async () => {
+      await ensureAudio();
+      drawNextCard();
+    });
+
+    // 4. シャッフルボタン（52枚終了時）
+    btnShuffle.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      await ensureAudio();
+      playShuffleSound();
+      initDeck();
+      screenGameover.classList.add("hidden");
+      // 最初の黒い画面（「ແຕະ」）に戻る仕様
+      screenBlackTap.classList.remove("hidden");
+    });
+
+    // サウンドON/OFF
+    soundBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      isSoundMuted = !isSoundMuted;
+      soundIconOn.classList.toggle("hidden", isSoundMuted);
+      soundIconOff.classList.toggle("hidden", !isSoundMuted);
+    });
+  </script>
+</body>
+</html>
