@@ -560,8 +560,13 @@
           overheadMarker: lane.querySelector(`#overheadMarker_${duck.id}`),
           rankBadge: lane.querySelector(`#rankBadge_${duck.id}`),
           wakeSplash: lane.querySelector(`#wakeSplash_${duck.id}`),
-          burstTime: 2.5 + Math.random() * 8.5,
+                    baseSpeed: 0.5 + Math.random() * 0.8,
+          wobbleSpeed: 2 + Math.random() * 3,
+          wobbleSize: 2 + Math.random() * 4,
           noiseSeed: Math.random() * 100,
+          burstTime: 2 + Math.random() * 9,
+          burstPower: 6 + Math.random() * 14,
+          behavior: Math.random() < 0.25 ? "late_burst" : (Math.random() < 0.5 ? "fast_start_fail" : (Math.random() < 0.7 ? "stumble_then_rush" : "normal")),
           currentRank: index + 1
         };
       });
@@ -610,18 +615,28 @@
 
         // 各ダックの位置計算
         duckStates.forEach(d => {
-          let prog = overallProgress * 80;
-          const wobble = Math.sin((elapsed * 3.5) + d.noiseSeed) * 6;
+          let speedMod = d.baseSpeed;
           
-          if (elapsed > d.burstTime && elapsed < d.burstTime + 3) {
-            prog += 6.5;
+          if (d.behavior === "late_burst" && elapsed > RACE_DURATION - 5) {
+             speedMod += 0.85; 
+          } else if (d.behavior === "fast_start_fail") {
+             if (elapsed < 5) speedMod += 0.7;
+             else if (elapsed > 10) speedMod -= 0.6;
+          } else if (d.behavior === "stumble_then_rush") {
+             if (elapsed < 6) speedMod -= 0.5;
+             else if (elapsed > 10) speedMod += 1.1;
           }
 
-          d.progress = Math.min(82, Math.max(2, 2 + prog + wobble));
-          if (overallProgress >= 1.0) {
-            d.progress = 82 - ((d.currentRank - 1) * 3.5);
+          let prog = overallProgress * 80 * speedMod;
+          const wobble = Math.sin((elapsed * d.wobbleSpeed) + d.noiseSeed) * d.wobbleSize;
+          
+          if (elapsed > d.burstTime && elapsed < d.burstTime + 3) {
+            prog += d.burstPower * Math.sin(((elapsed - d.burstTime) / 3) * Math.PI);
           }
-          d.element.style.left = `${d.progress}%`;
+
+          d.progress = Math.max(2, 2 + prog + wobble);
+          const renderProgress = Math.min(88, d.progress);
+          d.element.style.left = `${renderProgress}%`;
         });
 
         // リアルタイム順位の判定
